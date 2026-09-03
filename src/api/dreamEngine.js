@@ -515,7 +515,7 @@ async function callLlmApi({ dreamText, personaId, persona, moodId, mood, selecte
   const semantic = extractSemanticFeatures(dreamText, seed);
   const radar = calculateRadarStats(dreamText, moodId, semantic, seed);
   const neurotransmitters = calculateNeurotransmitters(dreamText, moodId, semantic, seed);
-  const illustrationUrl = DREAM_ILLUSTRATIONS[seed % DREAM_ILLUSTRATIONS.length];
+  const illustrationUrl = DREAM_ILLUSTRATIONS[seed % DREAM_ILLUSTRATIONS.length].url;
 
   const prompt = `作为一个极其专业的解梦大师（流派：${persona.name}，风格：${persona.desc}），请深度解析以下梦境：
 “${dreamText}”
@@ -572,14 +572,15 @@ async function callLlmApi({ dreamText, personaId, persona, moodId, mood, selecte
             
             const rawSymbols = getSection('意象');
             const symbols = [];
+            const ICONS = ['✨', '🔮', '🌌', '🧩', '👁️', '🎭', '🌀', '🦋'];
             if (rawSymbols) {
               const lines = rawSymbols.split('\n');
               for (const line of lines) {
                 const match = line.match(/^\d+\.\s*\[(.*?)\]:\s*\[(.*?)\]$/) || line.match(/^\d+\.\s*([^:]+):\s*(.*)$/) || line.match(/^-?\s*\*?\*?([^:]+)\*?\*?:\s*(.*)$/);
                 if (match) {
-                  let name = match[1].replace(/\[|\]/g, '').trim();
-                  let desc = match[2].replace(/\[|\]/g, '').trim();
-                  if (name && desc) symbols.push({ name, desc });
+                  let name = match[1].replace(/\[|\]|\*|#/g, '').trim();
+                  let desc = match[2].replace(/\[|\]|\*|#/g, '').trim();
+                  if (name && desc) symbols.push({ name, desc, icon: ICONS[symbols.length % ICONS.length] });
                 }
               }
             }
@@ -641,7 +642,7 @@ async function callDifyApi({ dreamText, personaId, persona, moodId, mood, select
   const semantic = extractSemanticFeatures(dreamText, seed);
   const radar = calculateRadarStats(dreamText, moodId, semantic, seed);
   const neurotransmitters = calculateNeurotransmitters(dreamText, moodId, semantic, seed);
-  const illustrationUrl = DREAM_ILLUSTRATIONS[seed % DREAM_ILLUSTRATIONS.length];
+  const illustrationUrl = DREAM_ILLUSTRATIONS[seed % DREAM_ILLUSTRATIONS.length].url;
 
   const queryPrompt = `梦境内容：${dreamText}
 当前情绪基调：${mood.name}。标签：${selectedTags.join(', ')}。
@@ -696,14 +697,15 @@ async function callDifyApi({ dreamText, personaId, persona, moodId, mood, select
             
             const rawSymbols = getSection('意象');
             const symbols = [];
+            const ICONS = ['✨', '🔮', '🌌', '🧩', '👁️', '🎭', '🌀', '🦋'];
             if (rawSymbols) {
               const lines = rawSymbols.split('\n');
               for (const line of lines) {
                 const match = line.match(/^\d+\.\s*\[(.*?)\]:\s*\[(.*?)\]$/) || line.match(/^\d+\.\s*([^:]+):\s*(.*)$/) || line.match(/^-?\s*\*?\*?([^:]+)\*?\*?:\s*(.*)$/);
                 if (match) {
-                  let name = match[1].replace(/\[|\]/g, '').trim();
-                  let desc = match[2].replace(/\[|\]/g, '').trim();
-                  if (name && desc) symbols.push({ name, desc });
+                  let name = match[1].replace(/\[|\]|\*|#/g, '').trim();
+                  let desc = match[2].replace(/\[|\]|\*|#/g, '').trim();
+                  if (name && desc) symbols.push({ name, desc, icon: ICONS[symbols.length % ICONS.length] });
                 }
               }
             }

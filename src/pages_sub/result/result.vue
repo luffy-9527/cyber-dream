@@ -539,11 +539,11 @@ onShareTimeline(() => {
       .p-name {
         font-size: 22rpx;
         font-weight: bold;
-        color: #2b2b2b;
+        color: #f8f9fa;
       }
       .p-title {
         font-size: 16rpx;
-        color: #595959;
+        color: rgba(255, 255, 255, 0.7);
       }
     }
   }
