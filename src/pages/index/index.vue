@@ -6,6 +6,25 @@
       
       <!-- 顶部 Header 品牌 -->
       <view class="hero-header">
+        
+        <!-- 漂浮莲花 -->
+        <view class="floating-lotus lotus-bg lotus-1"></view>
+        <view class="floating-lotus lotus-bg lotus-2"></view>
+        <view class="floating-lotus lotus-bg lotus-3"></view>
+        <view class="floating-lotus lotus-bg lotus-4"></view>
+        <view class="floating-lotus lotus-bg lotus-5"></view>
+        <view class="floating-lotus lotus-bg lotus-6"></view>
+        
+        <!-- 动态时辰与祥云暗纹 -->
+        <view class="top-aesthetic-bar">
+          <text class="cloud-icon">༄</text>
+          <view class="time-stamp">
+            <text class="shichen">{{ currentShiChen }}</text>
+            <text class="time-hint">{{ timeHint }}</text>
+          </view>
+          <text class="cloud-icon flip">༄</text>
+        </view>
+        
         <view class="header-top-row">
           <text class="hero-title">梦源阁</text>
           
@@ -133,7 +152,7 @@
     <view class="fixed-bottom-bar">
       <button class="decode-btn cyber-btn-primary" @tap="handleStartDecoding">
         <text class="btn-text">记录我的梦境</text>
-        <text class="btn-icon">🔮</text>
+        <text class="btn-icon">🌙</text>
       </button>
     </view>
 
@@ -173,7 +192,34 @@ const isRecording = ref(false);
 
 
 
+
+const currentShiChen = ref('');
+const timeHint = ref('');
+
+function updateShiChen() {
+  const hour = new Date().getHours();
+  const shichenMap = [
+    { name: '子时', hint: '夜半深沉 宜入梦', hours: [23, 0] },
+    { name: '丑时', hint: '鸡鸣将至 忌思虑', hours: [1, 2] },
+    { name: '寅时', hint: '平旦初醒 宜静心', hours: [3, 4] },
+    { name: '卯时', hint: '日出破晓 宜清心', hours: [5, 6] },
+    { name: '辰时', hint: '食时朝露 宜定神', hours: [7, 8] },
+    { name: '巳时', hint: '隅中日升 宜行事', hours: [9, 10] },
+    { name: '午时', hint: '日中当顶 宜小憩', hours: [11, 12] },
+    { name: '未时', hint: '日跌偏西 宜安神', hours: [13, 14] },
+    { name: '申时', hint: '晡时向晚 宜内观', hours: [15, 16] },
+    { name: '酉时', hint: '日入黄昏 宜收心', hours: [17, 18] },
+    { name: '戌时', hint: '黄昏华灯 宜冥想', hours: [19, 20] },
+    { name: '亥时', hint: '人定夜阑 宜安息', hours: [21, 22] }
+  ];
+  let current = shichenMap.find(s => s.hours.includes(hour));
+  if (!current) current = shichenMap[0];
+  currentShiChen.value = current.name;
+  timeHint.value = current.hint;
+}
+
 onMounted(() => {
+  updateShiChen();
   
   
 
@@ -266,19 +312,87 @@ async function handleStartDecoding() {
 
 .vertical-deco {
   position: absolute;
-  top: 140rpx;
-  right: 20rpx;
+  top: 40rpx;
+  right: 15rpx;
   width: 50rpx;
   font-size: 32rpx;
-  color: rgba(188, 49, 44, 0.1);
+  color: rgba(188, 49, 44, 0.35);
   font-family: "STKaiti", "KaiTi", serif;
-  letter-spacing: 24rpx;
+  letter-spacing: 12rpx;
   writing-mode: vertical-rl;
-  z-index: 0;
+  z-index: 10;
   pointer-events: none;
 }
 
-/* Header */
+
+  /* 漂浮莲花与顶部装饰 */
+  .floating-lotus {
+    position: absolute;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .lotus-bg {
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg viewBox='0 0 64 64' xmlns='http://www.w3.org/2000/svg'%3E%3Cg stroke='%23c2956e' fill='none' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M32 50 C 32 50, 18 36, 32 10 C 46 36, 32 50, 32 50 Z' /%3E%3Cpath d='M32 50 C 32 50, 10 40, 14 22 C 22 28, 32 40, 32 40' /%3E%3Cpath d='M32 50 C 32 50, 54 40, 50 22 C 42 28, 32 40, 32 40' /%3E%3Cpath d='M30 48 C 30 48, -2 38, 4 28 C 12 36, 22 44, 22 44' /%3E%3Cpath d='M34 48 C 34 48, 66 38, 60 28 C 52 36, 42 44, 42 44' /%3E%3C/g%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+  
+  .lotus-1 {
+    width: 80rpx; height: 80rpx; top: -20rpx; left: 40rpx;
+    opacity: 0; --op: 0.45; animation: fallLotus 10s linear infinite;
+  }
+  .lotus-2 {
+    width: 50rpx; height: 50rpx; top: -40rpx; right: 60rpx;
+    opacity: 0; --op: 0.35; animation: fallLotus 12s linear infinite 2s;
+  }
+  .lotus-3 {
+    width: 30rpx; height: 30rpx; top: 10rpx; left: 120rpx;
+    opacity: 0; --op: 0.25; animation: fallLotus 14s linear infinite 5s;
+  }
+  .lotus-4 {
+    width: 45rpx; height: 45rpx; top: -10rpx; right: 140rpx;
+    opacity: 0; --op: 0.3; animation: fallLotus 11s linear infinite 1s;
+  }
+  .lotus-5 {
+    width: 25rpx; height: 25rpx; top: 30rpx; left: 20rpx;
+    opacity: 0; --op: 0.25; animation: fallLotus 13s linear infinite 7s;
+  }
+  .lotus-6 {
+    width: 35rpx; height: 35rpx; top: -30rpx; right: 40rpx;
+    opacity: 0; --op: 0.3; animation: fallLotus 15s linear infinite 4s;
+  }
+  
+  @keyframes fallLotus {
+    0% { transform: translate(0, -40rpx) rotate(-15deg); opacity: 0; }
+    15% { opacity: var(--op); }
+    85% { opacity: var(--op); }
+    100% { transform: translate(30rpx, 220rpx) rotate(25deg); opacity: 0; }
+  }
+
+  .top-aesthetic-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20rpx;
+    margin-bottom: 24rpx;
+    opacity: 0.85;
+  }
+  .cloud-icon { font-size: 28rpx; color: #c2956e; font-weight: 300; }
+  .cloud-icon.flip { transform: scaleX(-1); display: inline-block; }
+  
+  .time-stamp {
+    display: flex; align-items: center; gap: 12rpx;
+    padding: 6rpx 16rpx;
+    border: 1px solid rgba(194, 149, 110, 0.3);
+    border-radius: 6rpx; background: rgba(194, 149, 110, 0.03);
+  }
+  .shichen { font-size: 22rpx; color: #c2956e; font-weight: bold; letter-spacing: 4rpx; }
+  .time-hint {
+    font-size: 20rpx; color: #8c8c8c; border-left: 1px solid rgba(194, 149, 110, 0.3); padding-left: 12rpx;
+  }
+
+  /* Header */
 .hero-header {
   margin-bottom: 50rpx;
   text-align: center;

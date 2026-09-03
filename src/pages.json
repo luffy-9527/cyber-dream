@@ -1,13 +1,6 @@
 {
   "pages": [
     {
-      "path": "pages/splash/splash",
-      "style": {
-        "navigationStyle": "custom",
-        "backgroundColor": "#090a16"
-      }
-    },
-    {
       "path": "pages/index/index",
       "style": {
         "navigationBarTitleText": "梦源阁",
@@ -74,15 +67,21 @@
     "list": [
       {
         "pagePath": "pages/index/index",
-        "text": "终端入梦"
+        "text": "终端入梦",
+        "iconPath": "static/icons/home.png",
+        "selectedIconPath": "static/icons/home-active.png"
       },
       {
         "pagePath": "pages/search/search",
-        "text": "解梦辞典"
+        "text": "解梦辞典",
+        "iconPath": "static/icons/dictionary.png",
+        "selectedIconPath": "static/icons/dictionary-active.png"
       },
       {
         "pagePath": "pages/archive/archive",
-        "text": "梦境档案"
+        "text": "梦境档案",
+        "iconPath": "static/icons/archive.png",
+        "selectedIconPath": "static/icons/archive-active.png"
       }
     ]
   }
