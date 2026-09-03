@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { analyzeDreamText } from '../api/dreamEngine.js';
+import { ENV } from '../config/env.js';
 
 const STORAGE_KEY_HISTORY = 'CYBER_DREAM_HISTORY';
 const STORAGE_KEY_FAVORITES = 'CYBER_DREAM_FAVORITES';

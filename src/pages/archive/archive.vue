@@ -9,7 +9,7 @@
           <view style="display: flex; align-items: center;">
             <text class="stats-title neon-text-cyan">🌌 潜意识档案库</text>
           </view>
-          <text class="api-btn" @tap="configApiKey">⚙️ AI配置</text>
+          
           <text class="stats-badge">已记录 {{ dreamStore.totalDreamsCount }} 个梦境</text>
         </view>
 
@@ -191,31 +191,14 @@ const showPoster = ref(false);
 const selectedPosterDream = ref(null);
 
 // 计算最高频的情绪
-const showApiConfig = ref(false);
-const configForm = ref({ apiKey: '', apiUrl: '', apiModel: '' });
 
-function configApiKey() {
-  configForm.value = {
-    apiKey: dreamStore.settings?.apiKey || '',
-    apiUrl: dreamStore.settings?.apiUrl || 'https://api.deepseek.com/v1/chat/completions',
-    apiModel: dreamStore.settings?.apiModel || 'deepseek-chat'
-  };
-  showApiConfig.value = true;
-}
 
-function saveApiConfig() {
-  dreamStore.updateSettings({
-    apiKey: configForm.value.apiKey.trim(),
-    apiUrl: configForm.value.apiUrl.trim() || 'https://api.deepseek.com/v1/chat/completions',
-    apiModel: configForm.value.apiModel.trim() || 'deepseek-chat'
-  });
-  showApiConfig.value = false;
-  uni.showToast({ title: '配置已保存', icon: 'success' });
-}
 
-function closeApiConfig() {
-  showApiConfig.value = false;
-}
+
+
+
+
+
 
 const topMoodName = computed(() => {
   const stats = dreamStore.moodStats;

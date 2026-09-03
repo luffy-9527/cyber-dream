@@ -19,3 +19,5 @@ dist
 *.njsproj
 *.sln
 *.sw?
+# Local env config
+src/config/env.js

@@ -8,9 +8,7 @@
       <view class="hero-header">
         <view class="header-top-row">
           <text class="hero-title">梦源阁</text>
-          <view class="settings-btn" @tap="showSettings = true">
-            <text class="settings-icon">⚙️</text>
-          </view>
+          
         </view>
         <text class="hero-sub">观落叶而知秋，入梦魇而观心</text>
       </view>
@@ -148,52 +146,8 @@
       </view>
     </view>
 
-    <!-- API 设置弹窗 -->
-    <view class="modal-overlay" v-if="showSettings">
-      <view class="glass-panel modal-card">
-        <view class="modal-header">
-          <text class="modal-title">天机引擎设置</text>
-          <text class="close-btn" @tap="showSettings = false">×</text>
-        </view>
-        
-        <view class="modal-body">
-          <scroll-view scroll-y style="max-height: 60vh;">
-            <view class="settings-section">
-              <text class="section-heading">🔮 通用大模型配置 (如 DeepSeek, 硅基流动)</text>
-              <view class="form-group">
-                <text class="form-label">API Base URL</text>
-                <input v-model="apiUrl" type="text" class="cyber-input" placeholder="https://api.deepseek.com/v1/chat/completions" />
-              </view>
-              <view class="form-group">
-                <text class="form-label">模型名称 (Model)</text>
-                <input v-model="apiModel" type="text" class="cyber-input" placeholder="deepseek-chat" />
-              </view>
-              <view class="form-group">
-                <text class="form-label">API Key</text>
-                <input v-model="customApiKey" type="text" class="cyber-input" placeholder="sk-..." password />
-              </view>
-            </view>
-
-            <view class="settings-section" style="margin-top: 30rpx;">
-              <text class="section-heading">🧠 Dify 工作流配置 (推荐: 结合知识库)</text>
-              <view class="form-group">
-                <text class="form-label">Dify Base URL</text>
-                <input v-model="difyUrl" type="text" class="cyber-input" placeholder="https://api.dify.ai/v1/chat-messages" />
-              </view>
-              <view class="form-group">
-                <text class="form-label">Dify API Key</text>
-                <input v-model="difyKey" type="text" class="cyber-input" placeholder="app-..." password />
-              </view>
-            </view>
-          </scroll-view>
-          
-          <button class="save-btn cyber-btn-primary" @tap="handleSaveSettings">保存配置</button>
-        </view>
-
-        </view>
-      </view>
-  
-    <view class="disclaimer-footer">
+    
+<view class="disclaimer-footer">
       <text>内容仅供个人娱乐，禁止作为任何参考</text>
     </view>
 </view>
@@ -216,20 +170,12 @@ const isAnalyzing = ref(false);
 const loadingStepText = ref('正在焚香，静候梦兆...');
 const isRecording = ref(false);
 
-const showSettings = ref(false);
-const customApiKey = ref('');
-const apiUrl = ref('');
-const apiModel = ref('');
-const difyUrl = ref('');
-const difyKey = ref('');
+
+
 
 onMounted(() => {
   
-  customApiKey.value = dreamStore.settings.apiKey || '';
-  apiUrl.value = dreamStore.settings.apiUrl || '';
-  apiModel.value = dreamStore.settings.apiModel || '';
-  difyUrl.value = dreamStore.settings.difyUrl || '';
-  difyKey.value = dreamStore.settings.difyKey || '';
+  
 
 });
 
@@ -263,19 +209,7 @@ function toggleTag(tag) {
   }
 }
 
-function handleSaveSettings() {
-  
-  dreamStore.updateSettings({ 
-    apiKey: customApiKey.value.trim(),
-    apiUrl: apiUrl.value.trim(),
-    apiModel: apiModel.value.trim(),
-    difyUrl: difyUrl.value.trim(),
-    difyKey: difyKey.value.trim()
-  });
 
-  showSettings.value = false;
-  uni.showToast({ title: '天机引擎配置已更新', icon: 'success' });
-}
 
 async function handleStartDecoding() {
   if (!dreamText.value.trim()) {
