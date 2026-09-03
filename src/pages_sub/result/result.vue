@@ -191,24 +191,10 @@
           </view>
 
           <!-- 未解锁 / 模糊状态 -->
-          <view class="locked-container" v-if="!deepAnalysisResult">
-            <view class="blur-overlay">
-              <text class="blur-text-mock">《基于认知神经科学的潜意识投射分析》</text>
-              <text class="blur-text-mock">摘要：本案主诉梦境呈现出高度的结构化失序。大脑在努力将清醒期的未决情绪进行重组...</text>
-              <text class="blur-text-mock">【临床意象解构】根据连续性假说...</text>
-            </view>
-            <view class="unlock-overlay">
-              <text class="unlock-title">潜意识核心权限已锁定</text>
-              <text class="unlock-sub">免费解锁「知网期刊级」深度学术解析报告</text>
-              <button 
-                class="cyber-btn-primary unlock-btn" 
-                @tap="handleUnlockDeepAnalysis"
-                :loading="isUnlockingDeepAnalysis"
-                :disabled="isUnlockingDeepAnalysis"
-              >
-                🔍 免费一键深度解析
-              </button>
-            </view>
+          <!-- 加载中状态 -->
+          <view class="loading-container" v-if="!deepAnalysisResult">
+            <view class="loading-spinner"></view>
+            <text class="loading-text">正在深度学术解构网络...</text>
           </view>
 
           <!-- 已解锁状态 -->
@@ -969,55 +955,35 @@ onShareTimeline(() => {
   }
 }
 
-.locked-container {
-  position: relative;
-  height: 300rpx;
-  
-  .blur-overlay {
-    position: absolute;
-    inset: 0;
-    filter: blur(6px);
-    opacity: 0.5;
-    display: flex;
-    flex-direction: column;
-    gap: 10rpx;
-    pointer-events: none;
-  }
-  .blur-text-mock {
-    font-size: 24rpx;
-    color: #8c8c8c;
-  }
-  
-  .unlock-overlay {
-    position: absolute;
-    inset: 0;
+.loading-container {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 16rpx;
-    background: rgba(255,255,255,0.4);
-    z-index: 2;
-  }
-  .unlock-title {
-    font-size: 32rpx;
-    font-weight: bold;
-    color: #332b26;
-  }
-  .unlock-sub {
-    font-size: 24rpx;
-    color: #6c635e;
-  }
-  .unlock-btn {
-    padding: 0 40rpx;
-    height: 72rpx;
-    font-size: 26rpx;
-    line-height: 72rpx;
-    border-radius: 36rpx;
-  }
-}
+    height: 200rpx;
+    gap: 20rpx;
 
-.unlocked-container {
+    .loading-spinner {
+      width: 40rpx;
+      height: 40rpx;
+      border: 4rpx solid rgba(69, 123, 157, 0.2);
+      border-top-color: #457b9d;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    .loading-text {
+      font-size: 24rpx;
+      color: #8c8c8c;
+    }
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .unlocked-container {
   display: flex;
   flex-direction: column;
   gap: 24rpx;
