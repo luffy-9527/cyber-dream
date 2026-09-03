@@ -155,25 +155,43 @@
           <text class="modal-title">天机引擎设置</text>
           <text class="close-btn" @tap="showSettings = false">×</text>
         </view>
+        
         <view class="modal-body">
-          <text class="modal-desc">此应用由 Gemini AI 强力驱动，你可以填入自己的 API Key 进行专属梦境推演。</text>
-          <view class="form-group">
-            <text class="form-label">Gemini API Key</text>
-            <input
-              v-model="customApiKey"
-              type="text"
-              class="cyber-input"
-              placeholder="AIzaSy..."
-              password
-            />
-          </view>
+          <scroll-view scroll-y style="max-height: 60vh;">
+            <view class="settings-section">
+              <text class="section-heading">🔮 通用大模型配置 (如 DeepSeek, 硅基流动)</text>
+              <view class="form-group">
+                <text class="form-label">API Base URL</text>
+                <input v-model="apiUrl" type="text" class="cyber-input" placeholder="https://api.deepseek.com/v1/chat/completions" />
+              </view>
+              <view class="form-group">
+                <text class="form-label">模型名称 (Model)</text>
+                <input v-model="apiModel" type="text" class="cyber-input" placeholder="deepseek-chat" />
+              </view>
+              <view class="form-group">
+                <text class="form-label">API Key</text>
+                <input v-model="customApiKey" type="text" class="cyber-input" placeholder="sk-..." password />
+              </view>
+            </view>
+
+            <view class="settings-section" style="margin-top: 30rpx;">
+              <text class="section-heading">🧠 Dify 工作流配置 (推荐: 结合知识库)</text>
+              <view class="form-group">
+                <text class="form-label">Dify Base URL</text>
+                <input v-model="difyUrl" type="text" class="cyber-input" placeholder="https://api.dify.ai/v1/chat-messages" />
+              </view>
+              <view class="form-group">
+                <text class="form-label">Dify API Key</text>
+                <input v-model="difyKey" type="text" class="cyber-input" placeholder="app-..." password />
+              </view>
+            </view>
+          </scroll-view>
+          
+          <button class="save-btn cyber-btn-primary" @tap="handleSaveSettings">保存配置</button>
         </view>
-        <view class="modal-footer">
-          <button class="cyber-btn-secondary" @tap="showSettings = false">取消</button>
-          <button class="cyber-btn-primary" @tap="handleSaveSettings">保存配置</button>
+
         </view>
       </view>
-    </view>
   
     <view class="disclaimer-footer">
       <text>内容仅供个人娱乐，禁止作为任何参考</text>
@@ -200,9 +218,19 @@ const isRecording = ref(false);
 
 const showSettings = ref(false);
 const customApiKey = ref('');
+const apiUrl = ref('');
+const apiModel = ref('');
+const difyUrl = ref('');
+const difyKey = ref('');
 
 onMounted(() => {
+  
   customApiKey.value = dreamStore.settings.apiKey || '';
+  apiUrl.value = dreamStore.settings.apiUrl || '';
+  apiModel.value = dreamStore.settings.apiModel || '';
+  difyUrl.value = dreamStore.settings.difyUrl || '';
+  difyKey.value = dreamStore.settings.difyKey || '';
+
 });
 
 function handleRandomPrompt() {
@@ -236,7 +264,15 @@ function toggleTag(tag) {
 }
 
 function handleSaveSettings() {
-  dreamStore.updateSettings({ apiKey: customApiKey.value.trim() });
+  
+  dreamStore.updateSettings({ 
+    apiKey: customApiKey.value.trim(),
+    apiUrl: apiUrl.value.trim(),
+    apiModel: apiModel.value.trim(),
+    difyUrl: difyUrl.value.trim(),
+    difyKey: difyKey.value.trim()
+  });
+
   showSettings.value = false;
   uni.showToast({ title: '天机引擎配置已更新', icon: 'success' });
 }
@@ -817,6 +853,20 @@ async function handleStartDecoding() {
   color: #999;
   padding: 40rpx 0;
   width: 100%;
+}
+
+.settings-section {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 20rpx;
+  border-radius: 12rpx;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.section-heading {
+  display: block;
+  font-size: 26rpx;
+  color: #cca26c;
+  margin-bottom: 20rpx;
+  font-weight: bold;
 }
 </style>
 

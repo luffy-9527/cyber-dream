@@ -141,14 +141,21 @@ export async function analyzeDreamText(arg1, arg2, arg3, arg4, arg5) {
   const mood = MOODS.find(m => m.id === moodId) || MOODS[0];
 
 
+  
   const apiKey = (typeof settings === 'string') ? settings : (settings?.apiKey || '');
   const apiUrl = settings?.apiUrl || 'https://api.deepseek.com/v1/chat/completions';
   const apiModel = settings?.apiModel || 'deepseek-chat';
+  const difyKey = settings?.difyKey || '';
+  const difyUrl = settings?.difyUrl || 'https://api.dify.ai/v1/chat-messages';
 
-  if (apiKey && apiKey.trim().length > 10) {
+  if (difyKey && difyKey.trim().length > 10) {
+    const apiResult = await callDifyApi({ dreamText, personaId, persona, moodId, mood, selectedTags, difyKey, difyUrl });
+    if (apiResult) return apiResult;
+  } else if (apiKey && apiKey.trim().length > 10) {
     const apiResult = await callLlmApi({ dreamText, personaId, persona, moodId, mood, selectedTags, apiKey, apiUrl, apiModel });
     if (apiResult) return apiResult;
   }
+
   
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -622,6 +629,130 @@ async function callLlmApi({ dreamText, personaId, persona, moodId, mood, selecte
       },
       fail: (err) => {
         console.error('LLM请求失败', err);
+        resolve(null);
+      }
+    });
+  });
+}
+
+
+async function callDifyApi({ dreamText, personaId, persona, moodId, mood, selectedTags, difyKey, difyUrl }) {
+  const seed = simpleHash(dreamText + personaId);
+  const semantic = extractSemanticFeatures(dreamText, seed);
+  const radar = calculateRadarStats(dreamText, moodId, semantic, seed);
+  const neurotransmitters = calculateNeurotransmitters(dreamText, moodId, semantic, seed);
+  const illustrationUrl = DREAM_ILLUSTRATIONS[seed % DREAM_ILLUSTRATIONS.length];
+
+  const queryPrompt = `梦境内容：${dreamText}
+当前情绪基调：${mood.name}。标签：${selectedTags.join(', ')}。
+
+请必须严格按照以下 Markdown 格式返回你的解析内容（不要包含任何其他多余文本，不要使用JSON格式）：
+
+# 标题
+（此处写梦境的意境标题，不超过10个字）
+# 金句
+（此处写一句充满哲理的金句作为核心定论）
+# 概括
+（此处用1-2句话高度概括梦境的核心隐喻）
+# 解析
+（此处写至少300字的详细深度解析长文，分成2-3段落，语气要完全符合【${persona.name}】的流派设定（${persona.desc}），请务必结合你的知识库【周公解梦】进行专业解读）
+# 意象
+1. [意象名称1]: [深度解析该意象代表了什么]
+2. [意象名称2]: [深度解析该意象代表了什么]
+# 运势
+宜：[此处写宜做什么]
+忌：[此处写忌做什么]
+代码：[此处写一个幸运代码，如 NEO-99, AWAKE-01]`;
+
+  return new Promise((resolve) => {
+    uni.request({
+      url: difyUrl,
+      method: 'POST',
+      header: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + difyKey },
+      data: {
+        inputs: {
+          persona: persona.name,
+          mood: mood.name
+        },
+        query: queryPrompt,
+        response_mode: 'blocking',
+        user: 'cyber-dream-user-' + Date.now()
+      },
+      success: (res) => {
+        if (res.data && res.data.answer) {
+          try {
+            const content = res.data.answer;
+            
+            const getSection = (name) => {
+              const regex = new RegExp(`# ${name}\\s*([\\s\\S]*?)(?=# |$)`);
+              const match = content.match(regex);
+              return match ? match[1].trim() : '';
+            };
+
+            const title = getSection('标题') || '潜意识碎片';
+            const quote = getSection('金句') || '梦境是现实的倒影。';
+            const summary = getSection('概括') || '这是一场意义深远的梦境...';
+            const analysis = getSection('解析') || 'Dify 知识库解析生成中...';
+            
+            const rawSymbols = getSection('意象');
+            const symbols = [];
+            if (rawSymbols) {
+              const lines = rawSymbols.split('\n');
+              for (const line of lines) {
+                const match = line.match(/^\d+\.\s*\[(.*?)\]:\s*\[(.*?)\]$/) || line.match(/^\d+\.\s*([^:]+):\s*(.*)$/) || line.match(/^-?\s*\*?\*?([^:]+)\*?\*?:\s*(.*)$/);
+                if (match) {
+                  let name = match[1].replace(/\[|\]/g, '').trim();
+                  let desc = match[2].replace(/\[|\]/g, '').trim();
+                  if (name && desc) symbols.push({ name, desc });
+                }
+              }
+            }
+            if (symbols.length === 0) symbols.push(...semantic.symbols);
+
+            const rawFortune = getSection('运势');
+            let lucky = '宜：冥想';
+            let taboo = '忌：焦虑';
+            let code = 'SYS-OK';
+            if (rawFortune) {
+              const lMatch = rawFortune.match(/宜：(.*?)(?:\n|$)/);
+              const tMatch = rawFortune.match(/忌：(.*?)(?:\n|$)/);
+              const cMatch = rawFortune.match(/代码：(.*?)(?:\n|$)/);
+              if (lMatch) lucky = '宜：' + lMatch[1].replace(/\[|\]/g, '').trim();
+              if (tMatch) taboo = '忌：' + tMatch[1].replace(/\[|\]/g, '').trim();
+              if (cMatch) code = cMatch[1].replace(/\[|\]/g, '').trim();
+            }
+
+            resolve({
+              id: 'DREAM_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4),
+              title,
+              date: formatCurrentDate(),
+              timestamp: Date.now(),
+              dreamText,
+              personaId,
+              persona,
+              moodId,
+              mood,
+              selectedTags,
+              summary,
+              analysis,
+              symbols,
+              radar,
+              neurotransmitters,
+              colorTheme: persona.color,
+              quote,
+              fortune: { lucky, taboo, code },
+              illustrationUrl
+            });
+          } catch(e) {
+            console.error('Dify解析梦境失败', e);
+            resolve(null);
+          }
+        } else {
+          resolve(null);
+        }
+      },
+      fail: (err) => {
+        console.error('Dify请求失败', err);
         resolve(null);
       }
     });
