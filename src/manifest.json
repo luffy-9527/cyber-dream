@@ -1,0 +1,29 @@
+{
+  "name": "CyberDream · 赛博解梦局",
+  "appid": "",
+  "description": "AI 赛博解梦 / 奇幻梦境可视化小程序",
+  "versionName": "1.0.0",
+  "versionCode": "100",
+  "transformPx": false,
+  "app-plus": {
+    "usingComponents": true,
+    "nvueStyleCompiler": "uni-app",
+    "compilerVersion": 3
+  },
+  "mp-weixin": {
+    "appid": "",
+    "setting": {
+      "urlCheck": false,
+      "es6": true,
+      "postcss": true,
+      "minified": true
+    },
+    "usingComponents": true,
+    "permission": {
+      "scope.writePhotosAlbum": {
+        "desc": "需要将生成的梦境海报保存至您的手机相册"
+      }
+    }
+  },
+  "vueVersion": "3"
+}

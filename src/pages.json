@@ -1,0 +1,82 @@
+{
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "赛博解梦局",
+        "navigationBarTextStyle": "black",
+        "navigationBarBackgroundColor": "#f9f6f0",
+        "backgroundColor": "#f9f6f0"
+      }
+    },
+    {
+      "path": "pages/search/search",
+      "style": {
+        "navigationBarTitleText": "解梦辞典",
+        "navigationBarTextStyle": "black",
+        "navigationBarBackgroundColor": "#f9f6f0",
+        "backgroundColor": "#f9f6f0"
+      }
+    },
+    {
+      "path": "pages/archive/archive",
+      "style": {
+        "navigationBarTitleText": "梦境档案",
+        "navigationBarTextStyle": "black",
+        "navigationBarBackgroundColor": "#f9f6f0",
+        "backgroundColor": "#f9f6f0"
+      }
+    }
+  ],
+  "subPackages": [
+    {
+      "root": "pages_sub",
+      "pages": [
+        {
+          "path": "dict_detail/dict_detail",
+          "style": {
+            "navigationBarTitleText": "词条详情",
+            "navigationBarTextStyle": "black",
+            "navigationBarBackgroundColor": "#f9f6f0",
+            "backgroundColor": "#f9f6f0"
+          }
+        },
+        {
+          "path": "result/result",
+          "style": {
+            "navigationBarTitleText": "梦境解码视界",
+            "navigationBarTextStyle": "black",
+            "navigationBarBackgroundColor": "#f9f6f0",
+            "backgroundColor": "#f9f6f0"
+          }
+        }
+      ]
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTitleText": "梦源",
+    "navigationBarTextStyle": "black",
+    "navigationBarBackgroundColor": "#f9f6f0",
+    "backgroundColor": "#f9f6f0"
+  },
+  "tabBar": {
+    "color": "#8c8c8c",
+    "selectedColor": "#bc312c",
+    "borderStyle": "white",
+    "backgroundColor": "#f9f6f0",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "终端入梦"
+      },
+      {
+        "pagePath": "pages/search/search",
+        "text": "解梦辞典"
+      },
+      {
+        "pagePath": "pages/archive/archive",
+        "text": "梦境档案"
+      }
+    ]
+  }
+}
