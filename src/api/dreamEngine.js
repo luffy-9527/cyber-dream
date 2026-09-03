@@ -514,22 +514,29 @@ async function callLlmApi({ dreamText, personaId, persona, moodId, mood, selecte
 “${dreamText}”
 当前情绪基调：${mood.name}。标签：${selectedTags.join(', ')}。
 
-请返回一个绝对合法的JSON对象（不要任何其他多余文本），必须包含以下字段：
-{
-  "title": "梦境的赛博朋克风/意境标题（不超过10个字）",
-  "quote": "一句毒舌或充满哲理的金句作为核心定论（类似名言警句）",
-  "summary": "1-2句话高度概括梦境的核心隐喻",
-  "analysis": "至少300字的详细深度解析长文，分成2-3段落，语气要完全符合你的流派设定（比如毒舌、神棍、或是心理学家），一定要专业且深入，直戳痛点。",
-  "symbols": [
-    { "name": "梦境中的核心意象1", "desc": "深度解析该意象代表了什么" },
-    { "name": "梦境中的核心意象2", "desc": "深度解析" }
-  ],
-  "fortune": {
-    "lucky": "宜：xxx",
-    "taboo": "忌：xxx",
-    "code": "一个赛博风格的幸运代码，如 NEO-99, AWAKE-01"
-  }
-}`;
+请必须严格按照以下 Markdown 格式返回你的解析内容（不要包含任何其他多余文本，不要使用JSON格式）：
+
+# 标题
+（此处写梦境的赛博朋克风/意境标题，不超过10个字）
+
+# 金句
+（此处写一句毒舌或充满哲理的金句作为核心定论）
+
+# 概括
+（此处用1-2句话高度概括梦境的核心隐喻）
+
+# 解析
+（此处写至少300字的详细深度解析长文，分成2-3段落，语气要完全符合你的流派设定，一定要专业且深入，直戳痛点）
+
+# 意象
+1. [意象名称1]: [深度解析该意象代表了什么]
+2. [意象名称2]: [深度解析该意象代表了什么]
+
+# 运势
+宜：[此处写宜做什么]
+忌：[此处写忌做什么]
+代码：[此处写一个赛博风格的幸运代码，如 NEO-99, AWAKE-01]
+`;
 
   return new Promise((resolve) => {
     uni.request({
@@ -544,17 +551,49 @@ async function callLlmApi({ dreamText, personaId, persona, moodId, mood, selecte
         if (res.data && res.data.choices && res.data.choices.length > 0) {
           try {
             const content = res.data.choices[0].message.content;
-            const match = content.match(/\{.*\}/s);
-            let parsed = null;
-            if (match) {
-              parsed = JSON.parse(match[0]);
-            } else {
-              parsed = JSON.parse(content);
-            }
             
+            const getSection = (name) => {
+              const regex = new RegExp(`# ${name}\\s*([\\s\\S]*?)(?=# |$)`);
+              const match = content.match(regex);
+              return match ? match[1].trim() : '';
+            };
+
+            const title = getSection('标题') || '潜意识碎片';
+            const quote = getSection('金句') || '梦境是现实的倒影。';
+            const summary = getSection('概括') || '这是一场意义深远的梦境...';
+            const analysis = getSection('解析') || '解析生成中出现了未知的量子扰动...';
+            
+            const rawSymbols = getSection('意象');
+            const symbols = [];
+            if (rawSymbols) {
+              const lines = rawSymbols.split('\n');
+              for (const line of lines) {
+                const match = line.match(/^\d+\.\s*\[(.*?)\]:\s*\[(.*?)\]$/) || line.match(/^\d+\.\s*([^:]+):\s*(.*)$/) || line.match(/^-?\s*\*?\*?([^:]+)\*?\*?:\s*(.*)$/);
+                if (match) {
+                  let name = match[1].replace(/\[|\]/g, '').trim();
+                  let desc = match[2].replace(/\[|\]/g, '').trim();
+                  if (name && desc) symbols.push({ name, desc });
+                }
+              }
+            }
+            if (symbols.length === 0) symbols.push(...semantic.symbols);
+
+            const rawFortune = getSection('运势');
+            let lucky = '宜：冥想';
+            let taboo = '忌：焦虑';
+            let code = 'SYS-OK';
+            if (rawFortune) {
+              const lMatch = rawFortune.match(/宜：(.*?)(?:\n|$)/);
+              const tMatch = rawFortune.match(/忌：(.*?)(?:\n|$)/);
+              const cMatch = rawFortune.match(/代码：(.*?)(?:\n|$)/);
+              if (lMatch) lucky = '宜：' + lMatch[1].replace(/\[|\]/g, '').trim();
+              if (tMatch) taboo = '忌：' + tMatch[1].replace(/\[|\]/g, '').trim();
+              if (cMatch) code = cMatch[1].replace(/\[|\]/g, '').trim();
+            }
+
             resolve({
               id: 'DREAM_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4),
-              title: parsed.title || '潜意识碎片',
+              title,
               date: formatCurrentDate(),
               timestamp: Date.now(),
               dreamText,
@@ -563,14 +602,14 @@ async function callLlmApi({ dreamText, personaId, persona, moodId, mood, selecte
               moodId,
               mood,
               selectedTags,
-              summary: parsed.summary || '这是一场意义深远的梦境...',
-              analysis: parsed.analysis || '解析生成中出现了未知的量子扰动...',
-              symbols: parsed.symbols || semantic.symbols,
+              summary,
+              analysis,
+              symbols,
               radar,
               neurotransmitters,
               colorTheme: persona.color,
-              quote: parsed.quote || '梦境是现实的倒影。',
-              fortune: parsed.fortune || { lucky: '宜：冥想', taboo: '忌：焦虑', code: 'SYS-OK' },
+              quote,
+              fortune: { lucky, taboo, code },
               illustrationUrl
             });
           } catch(e) {
@@ -588,4 +627,3 @@ async function callLlmApi({ dreamText, personaId, persona, moodId, mood, selecte
     });
   });
 }
-
