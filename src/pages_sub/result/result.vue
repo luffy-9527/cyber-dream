@@ -467,7 +467,7 @@ function goHome() {
 // 微信分享卡片配置
 onShareAppMessage(() => {
   return {
-    title: `✨ 我在赛博解梦局解码了梦境：${currentDream.value?.title || '神秘梦境'}`,
+    title: `✨ 我在梦源阁解码了梦境：${currentDream.value?.title || '神秘梦境'}`,
     path: '/pages/index/index',
     imageUrl: currentDream.value?.illustrationUrl
   };
@@ -475,7 +475,7 @@ onShareAppMessage(() => {
 
 onShareTimeline(() => {
   return {
-    title: `✨ 赛博解梦局：${currentDream.value?.title || '梦境解析报告'}`,
+    title: `✨ 梦源阁：${currentDream.value?.title || '梦境解析报告'}`,
     query: `id=${currentDream.value?.id}`,
     imageUrl: currentDream.value?.illustrationUrl
   };

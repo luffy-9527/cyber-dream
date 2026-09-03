@@ -3,7 +3,7 @@
     {
       "path": "pages/index/index",
       "style": {
-        "navigationBarTitleText": "赛博解梦局",
+        "navigationBarTitleText": "梦源阁",
         "navigationBarTextStyle": "black",
         "navigationBarBackgroundColor": "#f9f6f0",
         "backgroundColor": "#f9f6f0"

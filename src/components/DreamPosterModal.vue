@@ -38,7 +38,7 @@
           <!-- 底部小程序码与品牌 -->
           <view class="poster-footer">
             <view class="brand-info">
-              <text class="brand-name neon-text-cyan">CyberDream · 赛博解梦局</text>
+              <text class="brand-name neon-text-cyan">CyberDream · 梦源阁</text>
               <text class="brand-slogan">探索人类潜意识的高维视界</text>
             </view>
             <view class="qrcode-mock">
@@ -193,10 +193,10 @@ function handleSaveImage() {
 
   ctx.setFillStyle('#00f2fe');
   ctx.setFontSize(15);
-  ctx.fillText('CyberDream · 赛博解梦局', 36, 518);
+  ctx.fillText('CyberDream · 梦源阁', 36, 518);
   ctx.setFillStyle('#64748b');
   ctx.setFontSize(11);
-  ctx.fillText('微信小程序搜索「赛博解梦局」记录你的梦', 36, 545);
+  ctx.fillText('微信小程序搜索「梦源阁」记录你的梦', 36, 545);
 
   ctx.draw(false, () => {
     setTimeout(() => {

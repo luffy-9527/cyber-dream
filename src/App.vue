@@ -1,7 +1,7 @@
 <script>
 export default {
   onLaunch: function () {
-    console.log('✨ [CyberDream] 赛博解梦终端已启动...');
+    console.log('✨ [CyberDream] 梦源阁终端已启动...');
   },
   onShow: function () {
     console.log('✨ [CyberDream] 终端进入前台');
