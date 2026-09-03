@@ -198,14 +198,14 @@
             </view>
             <view class="unlock-overlay">
               <text class="unlock-title">潜意识核心权限已锁定</text>
-              <text class="unlock-sub">观看广告即可解锁「知网期刊级」深度解析报告</text>
+              <text class="unlock-sub">免费解锁「知网期刊级」深度学术解析报告</text>
               <button 
                 class="cyber-btn-primary unlock-btn" 
                 @tap="handleUnlockDeepAnalysis"
                 :loading="isUnlockingDeepAnalysis"
                 :disabled="isUnlockingDeepAnalysis"
               >
-                📺 看广告解锁深度解析
+                🔍 免费一键深度解析
               </button>
             </view>
           </view>
@@ -273,7 +273,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useDreamStore } from '@/store/dreamStore';
 
 
@@ -404,21 +404,25 @@ const isFavorited = computed(() => {
   return dreamStore.favoriteIds.includes(currentDream.value.id);
 });
 
+
+onMounted(() => {
+  if (currentDream.value && !deepAnalysisResult.value) {
+    handleUnlockDeepAnalysis();
+  }
+});
+
 async function handleUnlockDeepAnalysis() {
   if (isUnlockingDeepAnalysis.value) return;
   
-  const success = await showRewardedVideoAd('adunit-xxxxxx'); // 替换为真实广告ID
-  if (success) {
-    isUnlockingDeepAnalysis.value = true;
-    try {
-      const result = await callAcademicDeepAnalysis(currentDream.value.dreamText, dreamStore.settings.apiKey);
-      dreamStore.setDeepAnalysisResult(result);
-      uni.showToast({ title: '深度解析完毕', icon: 'success' });
-    } catch (e) {
-      uni.showToast({ title: '神经网络波动，请重试', icon: 'none' });
-    } finally {
-      isUnlockingDeepAnalysis.value = false;
-    }
+  isUnlockingDeepAnalysis.value = true;
+  try {
+    const result = await callAcademicDeepAnalysis(currentDream.value.dreamText, dreamStore.settings.apiKey);
+    dreamStore.setDeepAnalysisResult(result);
+    uni.showToast({ title: '深度解析完毕', icon: 'success' });
+  } catch (e) {
+    uni.showToast({ title: '神经网络波动，请重试', icon: 'none' });
+  } finally {
+    isUnlockingDeepAnalysis.value = false;
   }
 }
 
