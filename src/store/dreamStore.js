@@ -184,6 +184,13 @@ export const useDreamStore = defineStore('dream', {
       }
     },
 
+        clearAllDreams() {
+      this.historyList = [];
+      this.favoriteIds = [];
+      this.persistHistory();
+      this.persistFavorites();
+    },
+    
     persistHistory() {
       try {
         uni.setStorageSync(STORAGE_KEY_HISTORY, this.historyList);

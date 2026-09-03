@@ -187,6 +187,22 @@ const dreamStore = useDreamStore();
 
 const searchKeyword = ref('');
 const currentTab = ref('all'); // 'all' | 'fav'
+function handleClearAll() {
+  uni.showModal({
+    title: '⚠️ 危险操作',
+    content: '是否彻底清除所有本地梦境记录？此操作不可恢复。',
+    confirmText: '彻底清除',
+    confirmColor: '#bc312c',
+    cancelText: '保留',
+    success: (res) => {
+      if (res.confirm) {
+        dreamStore.clearAllDreams();
+        uni.showToast({ title: '记忆已消除', icon: 'success' });
+      }
+    }
+  });
+}
+
 const showPoster = ref(false);
 const selectedPosterDream = ref(null);
 
@@ -330,7 +346,38 @@ function goHome() {
   }
 }
 
-.filter-section {
+  .privacy-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(69, 123, 157, 0.05);
+    border: 1px solid rgba(69, 123, 157, 0.15);
+    padding: 16rpx 20rpx;
+    border-radius: 12rpx;
+    margin-bottom: 30rpx;
+
+    .privacy-text {
+      display: flex;
+      align-items: center;
+      gap: 10rpx;
+      flex: 1;
+      .icon { font-size: 24rpx; }
+      .text { font-size: 20rpx; color: #7a9da8; }
+    }
+
+    .clear-action {
+      display: flex;
+      align-items: center;
+      gap: 6rpx;
+      padding: 8rpx 16rpx;
+      background: rgba(188, 49, 44, 0.1);
+      border-radius: 8rpx;
+      .icon { font-size: 22rpx; }
+      .text { font-size: 20rpx; color: #bc312c; font-weight: bold; }
+    }
+  }
+
+  .filter-section {
   margin-bottom: 30rpx;
 
   .search-bar {
