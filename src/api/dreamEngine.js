@@ -124,28 +124,29 @@ const DREAM_ILLUSTRATIONS = [
 ];
 
 export async function analyzeDreamText(arg1, arg2, arg3, arg4, arg5) {
-  let dreamText, personaId, moodId, selectedTags, customApiKey;
+  let dreamText, personaId, moodId, selectedTags, settings;
   
   if (typeof arg1 === 'object' && arg1 !== null) {
-    // If passed as an object (old cached behavior)
-    ({ dreamText, personaId, moodId, selectedTags, apiKey: customApiKey } = arg1);
+    ({ dreamText, personaId, moodId, selectedTags, apiKey: settings } = arg1); // Handle old cache
   } else {
-    // If passed as positional arguments (new behavior)
     dreamText = arg1;
     personaId = arg2;
     moodId = arg3;
     selectedTags = arg4;
-    customApiKey = arg5;
+    settings = arg5;
   }
 
-  // Fallback to ensure dreamText is a string to prevent .includes crash
   dreamText = String(dreamText || '');
-
   const persona = PERSONAS[personaId] || PERSONAS.zhougong;
   const mood = MOODS.find(m => m.id === moodId) || MOODS[0];
 
-  if (customApiKey && customApiKey.trim().length > 10) {
-    const apiResult = await callLlmApi({ dreamText, personaId, moodId, selectedTags, apiKey: customApiKey });
+
+  const apiKey = (typeof settings === 'string') ? settings : (settings?.apiKey || '');
+  const apiUrl = settings?.apiUrl || 'https://api.deepseek.com/v1/chat/completions';
+  const apiModel = settings?.apiModel || 'deepseek-chat';
+
+  if (apiKey && apiKey.trim().length > 10) {
+    const apiResult = await callLlmApi({ dreamText, personaId, persona, moodId, mood, selectedTags, apiKey, apiUrl, apiModel });
     if (apiResult) return apiResult;
   }
   
@@ -501,6 +502,90 @@ function formatCurrentDate() {
   return `${year}.${month}.${day}`;
 }
 
-async function callLlmApi({ dreamText, personaId, moodId, selectedTags, apiKey }) {
-  return null;
+
+async function callLlmApi({ dreamText, personaId, persona, moodId, mood, selectedTags, apiKey, apiUrl, apiModel }) {
+  const seed = simpleHash(dreamText + personaId);
+  const semantic = extractSemanticFeatures(dreamText, seed);
+  const radar = calculateRadarStats(dreamText, moodId, semantic, seed);
+  const neurotransmitters = calculateNeurotransmitters(dreamText, moodId, semantic, seed);
+  const illustrationUrl = DREAM_ILLUSTRATIONS[seed % DREAM_ILLUSTRATIONS.length];
+
+  const prompt = `作为一个极其专业的解梦大师（流派：${persona.name}，风格：${persona.desc}），请深度解析以下梦境：
+“${dreamText}”
+当前情绪基调：${mood.name}。标签：${selectedTags.join(', ')}。
+
+请返回一个绝对合法的JSON对象（不要任何其他多余文本），必须包含以下字段：
+{
+  "title": "梦境的赛博朋克风/意境标题（不超过10个字）",
+  "quote": "一句毒舌或充满哲理的金句作为核心定论（类似名言警句）",
+  "summary": "1-2句话高度概括梦境的核心隐喻",
+  "analysis": "至少300字的详细深度解析长文，分成2-3段落，语气要完全符合你的流派设定（比如毒舌、神棍、或是心理学家），一定要专业且深入，直戳痛点。",
+  "symbols": [
+    { "name": "梦境中的核心意象1", "desc": "深度解析该意象代表了什么" },
+    { "name": "梦境中的核心意象2", "desc": "深度解析" }
+  ],
+  "fortune": {
+    "lucky": "宜：xxx",
+    "taboo": "忌：xxx",
+    "code": "一个赛博风格的幸运代码，如 NEO-99, AWAKE-01"
+  }
+}`;
+
+  return new Promise((resolve) => {
+    uni.request({
+      url: apiUrl,
+      method: 'POST',
+      header: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+      data: {
+        model: apiModel,
+        messages: [{ role: 'user', content: prompt }]
+      },
+      success: (res) => {
+        if (res.data && res.data.choices && res.data.choices.length > 0) {
+          try {
+            const content = res.data.choices[0].message.content;
+            const match = content.match(/\{.*\}/s);
+            let parsed = null;
+            if (match) {
+              parsed = JSON.parse(match[0]);
+            } else {
+              parsed = JSON.parse(content);
+            }
+            
+            resolve({
+              id: 'DREAM_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4),
+              title: parsed.title || '潜意识碎片',
+              date: formatCurrentDate(),
+              timestamp: Date.now(),
+              dreamText,
+              personaId,
+              persona,
+              moodId,
+              mood,
+              selectedTags,
+              summary: parsed.summary || '这是一场意义深远的梦境...',
+              analysis: parsed.analysis || '解析生成中出现了未知的量子扰动...',
+              symbols: parsed.symbols || semantic.symbols,
+              radar,
+              neurotransmitters,
+              colorTheme: persona.color,
+              quote: parsed.quote || '梦境是现实的倒影。',
+              fortune: parsed.fortune || { lucky: '宜：冥想', taboo: '忌：焦虑', code: 'SYS-OK' },
+              illustrationUrl
+            });
+          } catch(e) {
+            console.error('LLM解析梦境失败', e);
+            resolve(null);
+          }
+        } else {
+          resolve(null);
+        }
+      },
+      fail: (err) => {
+        console.error('LLM请求失败', err);
+        resolve(null);
+      }
+    });
+  });
 }
+

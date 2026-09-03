@@ -131,7 +131,7 @@ export const useDreamStore = defineStore('dream', {
           personaId,
           moodId,
           selectedTags,
-          this.settings.apiKey
+          this.settings
         );
         this.currentDream = result;
         // 自动存入历史记录
