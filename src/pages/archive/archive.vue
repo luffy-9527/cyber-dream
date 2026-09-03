@@ -30,6 +30,19 @@
       </view>
 
       <!-- 搜索与筛选 Tab -->
+      
+      <!-- 隐私声明与清除 -->
+      <view class="privacy-banner">
+        <view class="privacy-text">
+          <text class="icon">🔒</text>
+          <text class="text">全部记录仅加密存储在本地，不会上传服务器。</text>
+        </view>
+        <view class="clear-action" @tap="handleClearAll">
+          <text class="icon">🗑️</text>
+          <text class="text">清除记录</text>
+        </view>
+      </view>
+      
       <view class="filter-section">
         <view class="search-bar glass-panel">
           <text class="search-icon">🔍</text>
