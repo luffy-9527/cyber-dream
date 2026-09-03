@@ -10,6 +10,7 @@
           mode="aspectFill"
           class="art-image"
           @tap="previewImage"
+          @error="handleImageError"
         />
         <view class="art-overlay"></view>
 
@@ -423,6 +424,15 @@ async function handleUnlockDeepAnalysis() {
     uni.showToast({ title: '神经网络波动，请重试', icon: 'none' });
   } finally {
     isUnlockingDeepAnalysis.value = false;
+  }
+}
+
+
+function handleImageError() {
+  if (currentDream.value && currentDream.value.illustrationUrl) {
+    console.warn('Image failed to load, using fallback:', currentDream.value.illustrationUrl);
+    // Fallback to a highly reliable image
+    currentDream.value.illustrationUrl = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1000&q=80';
   }
 }
 

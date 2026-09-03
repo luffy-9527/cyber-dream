@@ -108,7 +108,7 @@ const DREAM_ILLUSTRATIONS = [
   },
   {
     theme: 'ocean',
-    url: 'https://images.unsplash.com/photo-1682687982501-1e5898cb8ff4?auto=format&fit=crop&w=1000&q=80',
+    url: 'https://images.unsplash.com/photo-1551244072-5d12893278ab?auto=format&fit=crop&w=1000&q=80',
     title: '沉睡的海沟与光海'
   },
   {
