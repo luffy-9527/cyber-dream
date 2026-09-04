@@ -1,11 +1,11 @@
 <template>
   <view v-if="visible" class="modal-mask" @touchmove.stop.prevent>
-    <view class="modal-container glass-panel-glow">
+    <view class="modal-container">
       <!-- 关闭按钮 -->
       <view class="close-btn" @tap="handleClose">✕</view>
 
       <view class="modal-header">
-        <text class="modal-title neon-text-cyan">✨ 梦境拍立得生成器</text>
+        <text class="modal-title">❖ 梦境画轴 · 题诗锦图</text>
         <text class="modal-subtitle">长按可保存海报或点击下方按钮</text>
       </view>
 
@@ -14,21 +14,24 @@
         <!-- 顶部插画 -->
         <view class="poster-img-box">
           <image :src="dream.illustrationUrl" mode="aspectFill" class="poster-img" />
-          <view class="poster-badge" :style="{ background: dream.colorTheme || '#00f2fe' }">
+          <view class="poster-badge">
             {{ dream.persona?.name || '赛博周公' }}
           </view>
         </view>
 
         <!-- 梦境标题与代号 -->
         <view class="poster-body">
-          <view class="poster-title">{{ dream.title }}</view>
-          <view class="poster-date">{{ dream.date }} · 潜意识深度观测</view>
+          <view class="poster-title-row">
+            <text class="poster-title">{{ dream.title }}</text>
+            <text class="poster-seal">梦兆</text>
+          </view>
+          <view class="poster-date">观星纪候：{{ dream.date }} · 潜意识深度观测</view>
           
           <view class="poster-quote">
             {{ dream.quote || '“一切未至之境，早已在午夜的脑波中完成推演。”' }}
           </view>
 
-          <!-- 象征物标签 -->
+          <!-- 象征物标签 (竹简词签风格) -->
           <view class="poster-tags">
             <view v-for="(sym, idx) in (dream.symbols || []).slice(0, 3)" :key="idx" class="poster-tag">
               {{ sym.icon }} {{ sym.name }}
@@ -38,12 +41,12 @@
           <!-- 底部小程序码与品牌 -->
           <view class="poster-footer">
             <view class="brand-info">
-              <text class="brand-name neon-text-cyan">CyberDream · 梦源阁</text>
+              <text class="brand-name">CyberDream · 梦源阁</text>
               <text class="brand-slogan">探索人类潜意识的高维视界</text>
             </view>
             <view class="qrcode-mock">
               <view class="qr-grid">
-                <text class="qr-icon">🪐</text>
+                <text class="qr-icon">印</text>
               </view>
               <text class="qr-tip">扫码入梦</text>
             </view>
@@ -56,12 +59,12 @@
         canvas-id="shareCanvas"
         id="shareCanvas"
         class="hidden-canvas"
-        style="width: 375px; height: 600px; position: fixed; left: -9999px; top: -9999px;"
+        style="width: 375px; height: 620px; position: fixed; left: 100vw; top: 0; z-index: -99; pointer-events: none;"
       ></canvas>
 
       <!-- 底部操作按钮 -->
       <view class="action-btns">
-        <button class="cyber-btn-secondary btn-item" @tap="handleShareFriend">
+        <button class="cyber-btn-secondary btn-item" open-type="share">
           <text class="btn-icon">💬</text> 转发给好友
         </button>
         <button class="cyber-btn-primary btn-item" :loading="isSaving" @tap="handleSaveImage">
@@ -73,7 +76,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, getCurrentInstance } from 'vue';
 
 const props = defineProps({
   visible: {
@@ -88,143 +91,257 @@ const props = defineProps({
 
 const emit = defineEmits(['update:visible', 'close']);
 const isSaving = ref(false);
+const instance = getCurrentInstance();
 
 function handleClose() {
   emit('update:visible', false);
   emit('close');
 }
 
-function handleShareFriend() {
-  uni.showToast({
-    title: '点击右上角【...】可直接分享给好友',
-    icon: 'none',
-    duration: 2500
+/**
+ * 尝试获取图片本地临时路径 (支持超时保护)
+ */
+async function getImageLocalPath(url) {
+  if (!url) return null;
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    return url;
+  }
+  return new Promise(resolve => {
+    const timer = setTimeout(() => {
+      console.warn('Get image info timeout, skipping image download');
+      resolve(null);
+    }, 2000);
+
+    uni.getImageInfo({
+      src: url,
+      success: res => {
+        clearTimeout(timer);
+        resolve(res.path);
+      },
+      fail: err => {
+        clearTimeout(timer);
+        console.warn('Get image info failed:', err);
+        resolve(null);
+      }
+    });
   });
 }
 
 /**
- * 绘制并保存海报
+ * 绘制并保存海报 (古典宣纸画轴)
  */
-function handleSaveImage() {
+async function handleSaveImage() {
+  if (isSaving.value) return;
   isSaving.value = true;
-  uni.showLoading({ title: '正在渲染海报...' });
+  uni.showLoading({ title: '正在题跋绘卷...' });
 
-  const ctx = uni.createCanvasContext('shareCanvas');
-  const width = 375;
-  const height = 600;
+  const safetyTimer = setTimeout(() => {
+    if (isSaving.value) {
+      isSaving.value = false;
+      uni.hideLoading();
+      uni.showToast({ title: '生成海报超时，请重试', icon: 'none' });
+    }
+  }, 8000);
 
-  // 1. 绘制深色背景
-  const grad = ctx.createLinearGradient(0, 0, 0, height);
-  grad.addColorStop(0, '#0c0e23');
-  grad.addColorStop(1, '#060711');
-  ctx.setFillStyle(grad);
-  ctx.fillRect(0, 0, width, height);
+  try {
+    const localImg = await getImageLocalPath(props.dream?.illustrationUrl);
+    const ctx = uni.createCanvasContext('shareCanvas', instance?.proxy);
+    const width = 375;
+    const height = 620;
 
-  // 2. 绘制顶部赛博发光流线
-  ctx.setStrokeStyle('#00f2fe');
-  ctx.setLineWidth(2);
-  ctx.beginPath();
-  ctx.moveTo(20, 20);
-  ctx.lineTo(width - 20, 20);
-  ctx.stroke();
+    // 1. 绘制温润宣纸背景
+    const grad = ctx.createLinearGradient(0, 0, 0, height);
+    grad.addColorStop(0, '#fcfaf5');
+    grad.addColorStop(1, '#f3ede0');
+    ctx.setFillStyle(grad);
+    ctx.fillRect(0, 0, width, height);
 
-  // 3. 绘制文字信息
-  ctx.setFillStyle('#00f2fe');
-  ctx.setFontSize(18);
-  ctx.fillText('CYBER DREAM · 梦境档案', 24, 55);
+    // 外圈双线装裱框
+    ctx.setStrokeStyle('rgba(184, 134, 81, 0.45)');
+    ctx.setLineWidth(1.5);
+    ctx.strokeRect(12, 12, width - 24, height - 24);
+    ctx.setStrokeStyle('rgba(184, 134, 81, 0.2)');
+    ctx.setLineWidth(1);
+    ctx.strokeRect(16, 16, width - 32, height - 32);
 
-  ctx.setFillStyle('#f8fafc');
-  ctx.setFontSize(22);
-  const titleText = props.dream.title || '「潜意识奇幻异界」';
-  ctx.fillText(titleText, 24, 100);
+    let currentY = 24;
 
-  ctx.setFillStyle('#94a3b8');
-  ctx.setFontSize(12);
-  ctx.fillText(`${props.dream.date || '2026.08.31'} | 解梦师: ${props.dream.persona?.name || '赛博周公'}`, 24, 125);
+    // 2. 插画绘制 (若获取到本地路径则绘制图，否则绘制优雅留白中堂框)
+    if (localImg) {
+      ctx.drawImage(localImg, 24, currentY, width - 48, 165);
+      // 插画金色边框
+      ctx.setStrokeStyle('rgba(184, 134, 81, 0.35)');
+      ctx.setLineWidth(1);
+      ctx.strokeRect(24, currentY, width - 48, 165);
+      currentY += 180;
+    } else {
+      // 优雅替代框
+      ctx.setFillStyle('rgba(184, 134, 81, 0.06)');
+      ctx.fillRect(24, currentY, width - 48, 48);
+      ctx.setStrokeStyle('rgba(184, 134, 81, 0.3)');
+      ctx.strokeRect(24, currentY, width - 48, 48);
+      ctx.setFillStyle('#8e6238');
+      ctx.setFontSize(14);
+      ctx.fillText('❖ 梦源阁 · 太虚画卷', 36, currentY + 30);
+      currentY += 65;
+    }
 
-  // 4. 绘制金句引用框
-  ctx.setFillStyle('rgba(255, 255, 255, 0.06)');
-  ctx.fillRect(20, 145, width - 40, 80);
-  ctx.setStrokeStyle('rgba(0, 242, 254, 0.3)');
-  ctx.strokeRect(20, 145, width - 40, 80);
+    // 3. 梦境标题
+    ctx.setFillStyle('#261c15');
+    ctx.setFontSize(20);
+    const titleText = props.dream?.title || '「潜意识奇幻异界」';
+    ctx.fillText(titleText, 26, currentY + 18);
 
-  ctx.setFillStyle('#e2e8f0');
-  ctx.setFontSize(13);
-  const quote = props.dream.quote || '一切未至之境，早已在午夜的脑波中完成推演。';
-  // 简易换行绘制
-  if (quote.length > 22) {
-    ctx.fillText(quote.substring(0, 22), 32, 175);
-    ctx.fillText(quote.substring(22, 44), 32, 198);
-  } else {
-    ctx.fillText(quote, 32, 185);
-  }
+    // 日期
+    ctx.setFillStyle('#8c7a6e');
+    ctx.setFontSize(12);
+    ctx.fillText(`观星纪候：${props.dream?.date || '2026.09.04'} | 解梦宗师: ${props.dream?.persona?.name || '赛博周公'}`, 26, currentY + 40);
 
-  // 5. 绘制梦境解析核心
-  ctx.setFillStyle('#94a3b8');
-  ctx.setFontSize(13);
-  ctx.fillText('【潜意识解码】', 24, 255);
+    currentY += 56;
 
-  ctx.setFillStyle('#cbd5e1');
-  const summary = props.dream.summary || '潜意识正在打破现存束缚，重构高维自性。';
-  if (summary.length > 24) {
-    ctx.fillText(summary.substring(0, 24), 24, 280);
-    ctx.fillText(summary.substring(24, 48), 24, 302);
-  } else {
-    ctx.fillText(summary, 24, 280);
-  }
+    // 4. 绘制金句引用框 (朱批水墨)
+    ctx.setFillStyle('rgba(184, 134, 81, 0.08)');
+    ctx.fillRect(24, currentY, width - 48, 68);
+    ctx.setStrokeStyle('#bc312c');
+    ctx.setLineWidth(3);
+    ctx.beginPath();
+    ctx.moveTo(24, currentY);
+    ctx.lineTo(24, currentY + 68);
+    ctx.stroke();
 
-  // 6. 绘制象征物胶囊
-  let tagX = 24;
-  const symbols = (props.dream.symbols || []).slice(0, 3);
-  symbols.forEach(sym => {
-    ctx.setFillStyle('rgba(0, 242, 254, 0.15)');
-    ctx.fillRect(tagX, 330, 95, 28);
-    ctx.setStrokeStyle('#00f2fe');
-    ctx.strokeRect(tagX, 330, 95, 28);
-    ctx.setFillStyle('#00f2fe');
-    ctx.setFontSize(11);
-    ctx.fillText(`${sym.name}`, tagX + 10, 348);
-    tagX += 105;
-  });
+    ctx.setFillStyle('#2b1f16');
+    ctx.setFontSize(12);
+    const quote = props.dream?.quote || '一切未至之境，早已在午夜的脑波中完成推演。';
+    if (quote.length > 24) {
+      ctx.fillText(quote.substring(0, 24), 36, currentY + 28);
+      ctx.fillText(quote.substring(24, 48), 36, currentY + 48);
+    } else {
+      ctx.fillText(quote, 36, currentY + 38);
+    }
 
-  // 7. 绘制底部品牌与二维码
-  ctx.setFillStyle('rgba(255, 255, 255, 0.1)');
-  ctx.fillRect(20, 480, width - 40, 90);
+    currentY += 82;
 
-  ctx.setFillStyle('#00f2fe');
-  ctx.setFontSize(15);
-  ctx.fillText('CyberDream · 梦源阁', 36, 518);
-  ctx.setFillStyle('#64748b');
-  ctx.setFontSize(11);
-  ctx.fillText('微信小程序搜索「梦源阁」记录你的梦', 36, 545);
+    // 5. 核心定论
+    ctx.setFillStyle('#bc312c');
+    ctx.setFontSize(12);
+    ctx.fillText('【天机定论】', 26, currentY + 14);
 
-  ctx.draw(false, () => {
+    ctx.setFillStyle('#4a3d35');
+    ctx.setFontSize(12);
+    const summary = props.dream?.summary || '潜意识正在打破现存束缚，重构高维自性。';
+    if (summary.length > 25) {
+      ctx.fillText(summary.substring(0, 25), 26, currentY + 34);
+      ctx.fillText(summary.substring(25, 50), 26, currentY + 52);
+    } else {
+      ctx.fillText(summary, 26, currentY + 36);
+    }
+
+    currentY += 72;
+
+    // 6. 绘制象征物竹简签
+    let tagX = 26;
+    const symbols = (props.dream?.symbols || []).slice(0, 3);
+    symbols.forEach(sym => {
+      ctx.setFillStyle('#ffffff');
+      ctx.fillRect(tagX, currentY, 96, 26);
+      ctx.setStrokeStyle('rgba(184, 134, 81, 0.45)');
+      ctx.setLineWidth(1);
+      ctx.strokeRect(tagX, currentY, 96, 26);
+      // 上下暗木边
+      ctx.setStrokeStyle('#8e6238');
+      ctx.setLineWidth(2);
+      ctx.beginPath();
+      ctx.moveTo(tagX, currentY);
+      ctx.lineTo(tagX + 96, currentY);
+      ctx.moveTo(tagX, currentY + 26);
+      ctx.lineTo(tagX + 96, currentY + 26);
+      ctx.stroke();
+
+      ctx.setFillStyle('#382c24');
+      ctx.setFontSize(11);
+      ctx.fillText(`${sym.name}`, tagX + 12, currentY + 17);
+      tagX += 106;
+    });
+
+    // 7. 底部品牌与印章
+    const footerY = height - 76;
+    ctx.setFillStyle('rgba(184, 134, 81, 0.08)');
+    ctx.fillRect(24, footerY, width - 48, 54);
+    ctx.setStrokeStyle('rgba(184, 134, 81, 0.3)');
+    ctx.setLineWidth(1);
+    ctx.strokeRect(24, footerY, width - 48, 54);
+
+    ctx.setFillStyle('#261c15');
+    ctx.setFontSize(14);
+    ctx.fillText('CyberDream · 梦源阁', 38, footerY + 24);
+    ctx.setFillStyle('#8c7a6e');
+    ctx.setFontSize(10);
+    ctx.fillText('微信小程序搜索「梦源阁」记录你的梦', 38, footerY + 42);
+
+    // 印章方印
+    ctx.setFillStyle('#bc312c');
+    ctx.setStrokeStyle('#bc312c');
+    ctx.strokeRect(width - 66, footerY + 11, 32, 32);
+    ctx.setFontSize(16);
+    ctx.fillText('印', width - 57, footerY + 33);
+
+    // 绘制并导出
+    ctx.draw(false);
+
+    // 延时等待绘制完成，避免微信小程序的 draw 回调不触发问题
     setTimeout(() => {
       uni.canvasToTempFilePath({
         canvasId: 'shareCanvas',
+        destWidth: 750,
+        destHeight: 1240,
+        fileType: 'png',
+        quality: 1,
         success: res => {
-          uni.hideLoading();
-          isSaving.value = false;
-          // 保存到相册
+          clearTimeout(safetyTimer);
+          // 保存至相册
           uni.saveImageToPhotosAlbum({
             filePath: res.tempFilePath,
             success: () => {
-              uni.showToast({ title: '已成功保存至相册！', icon: 'success' });
+              uni.hideLoading();
+              isSaving.value = false;
+              uni.showToast({ title: '已成功题跋存入相册！', icon: 'success' });
             },
-            fail: () => {
-              uni.showToast({ title: '保存失败或未授权相册权限', icon: 'none' });
+            fail: albumErr => {
+              uni.hideLoading();
+              isSaving.value = false;
+              console.warn('saveImageToPhotosAlbum fail:', albumErr);
+              if (albumErr.errMsg && (albumErr.errMsg.includes('auth') || albumErr.errMsg.includes('deny'))) {
+                uni.showModal({
+                  title: '需要相册权限',
+                  content: '请在设置中开启相册权限以保存画轴海报',
+                  confirmText: '去开启',
+                  success: mRes => {
+                    if (mRes.confirm) uni.openSetting();
+                  }
+                });
+              } else {
+                uni.showToast({ title: '保存已取消或未授权', icon: 'none' });
+              }
             }
           });
         },
         fail: err => {
+          clearTimeout(safetyTimer);
           uni.hideLoading();
           isSaving.value = false;
-          console.error('Canvas export error:', err);
-          uni.showToast({ title: '海报导出失败', icon: 'none' });
+          console.error('canvasToTempFilePath failed:', err);
+          uni.showToast({ title: '海报导出失败，请重试', icon: 'none' });
         }
-      });
-    }, 200);
-  });
+      }, instance?.proxy);
+    }, 400);
+
+  } catch (err) {
+    clearTimeout(safetyTimer);
+    uni.hideLoading();
+    isSaving.value = false;
+    console.error('handleSaveImage error:', err);
+    uni.showToast({ title: '渲染发生错误', icon: 'none' });
+  }
 }
 </script>
 
@@ -235,7 +352,7 @@ function handleSaveImage() {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(4, 6, 15, 0.85);
+  background: rgba(20, 16, 12, 0.78);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   z-index: 999;
@@ -249,20 +366,26 @@ function handleSaveImage() {
   width: 100%;
   max-width: 660rpx;
   max-height: 92vh;
-  padding: 36rpx 28rpx;
+  padding: 36rpx 28rpx 32rpx 28rpx;
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   overflow-y: auto;
+  background: rgba(250, 246, 240, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1.5rpx solid rgba(194, 149, 110, 0.4);
+  border-radius: 24rpx;
+  box-shadow: 0 16rpx 48rpx rgba(70, 50, 30, 0.28);
 }
 
 .close-btn {
   position: absolute;
   top: 20rpx;
   right: 24rpx;
-  font-size: 36rpx;
-  color: #94a3b8;
+  font-size: 34rpx;
+  color: #8c7a6e;
   padding: 10rpx;
   z-index: 10;
 }
@@ -272,14 +395,18 @@ function handleSaveImage() {
   margin-bottom: 24rpx;
 
   .modal-title {
-    font-size: 34rpx;
-    font-weight: bold;
+    font-size: 32rpx;
+    font-weight: 900;
+    color: #261c15;
+    font-family: "STZhongsong", "SimSun", serif;
+    letter-spacing: 2rpx;
     display: block;
   }
 
   .modal-subtitle {
     font-size: 22rpx;
-    color: #64748b;
+    color: #8c7a6e;
+    font-family: "STKaiti", "KaiTi", serif;
     margin-top: 6rpx;
     display: block;
   }
@@ -287,11 +414,14 @@ function handleSaveImage() {
 
 .poster-preview-card {
   width: 100%;
-  background: #0f1124;
-  border: 1px solid rgba(0, 242, 254, 0.35);
-  border-radius: 20rpx;
+  background: #faf6f0;
+  border: 1.5rpx solid rgba(194, 149, 110, 0.45);
+  border-radius: 18rpx;
   overflow: hidden;
-  box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, 0.6);
+  box-shadow: 
+    inset 0 0 0 4rpx #faf6f0,
+    inset 0 0 0 6rpx rgba(184, 134, 81, 0.3),
+    0 12rpx 36rpx rgba(110, 80, 50, 0.12);
 }
 
 .poster-img-box {
@@ -309,11 +439,14 @@ function handleSaveImage() {
     top: 18rpx;
     right: 18rpx;
     font-size: 20rpx;
-    color: #0b0c1b;
+    color: #261c15;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1.5rpx solid rgba(194, 149, 110, 0.5);
+    font-family: "STKaiti", "KaiTi", serif;
     font-weight: bold;
     padding: 6rpx 18rpx;
     border-radius: 20rpx;
-    box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.4);
+    box-shadow: 0 4rpx 12rpx rgba(110, 80, 50, 0.15);
   }
 }
 
@@ -321,27 +454,49 @@ function handleSaveImage() {
   padding: 24rpx;
 }
 
+.poster-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
 .poster-title {
   font-size: 32rpx;
+  font-weight: 900;
+  color: #261c15;
+  font-family: "STZhongsong", "SimSun", serif;
+  letter-spacing: 1.5rpx;
+}
+
+.poster-seal {
+  font-size: 16rpx;
+  color: #bc312c;
+  border: 1.5rpx solid #bc312c;
+  background: rgba(188, 49, 44, 0.08);
+  padding: 2rpx 8rpx;
+  border-radius: 4rpx;
+  font-family: "STKaiti", serif;
   font-weight: bold;
-  color: #f8fafc;
+  transform: rotate(-4deg);
 }
 
 .poster-date {
   font-size: 22rpx;
-  color: #00f2fe;
+  color: #8c7a6e;
+  font-family: "STKaiti", "KaiTi", serif;
   margin-top: 6rpx;
 }
 
 .poster-quote {
   margin-top: 18rpx;
-  padding: 16rpx;
-  background: rgba(255, 255, 255, 0.04);
-  border-left: 4rpx solid #00f2fe;
+  padding: 16rpx 18rpx;
+  background: rgba(184, 134, 81, 0.08);
+  border-left: 5rpx solid #bc312c;
   font-size: 24rpx;
-  color: #cbd5e1;
-  line-height: 1.5;
-  font-style: italic;
+  color: #3d2f26;
+  font-family: "STKaiti", "KaiTi", serif;
+  line-height: 1.55;
+  font-style: normal;
 }
 
 .poster-tags {
@@ -351,12 +506,16 @@ function handleSaveImage() {
   margin-top: 20rpx;
 
   .poster-tag {
-    font-size: 20rpx;
+    font-size: 21rpx;
     padding: 6rpx 16rpx;
-    background: rgba(0, 242, 254, 0.1);
-    border: 1px solid rgba(0, 242, 254, 0.3);
-    border-radius: 16rpx;
-    color: #00f2fe;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(194, 149, 110, 0.35);
+    border-top: 2rpx solid rgba(184, 134, 81, 0.5);
+    border-bottom: 2rpx solid rgba(184, 134, 81, 0.5);
+    border-radius: 4rpx;
+    color: #3d2f26;
+    font-family: "STKaiti", "KaiTi", serif;
+    font-weight: 700;
   }
 }
 
@@ -366,17 +525,20 @@ function handleSaveImage() {
   align-items: center;
   margin-top: 26rpx;
   padding-top: 20rpx;
-  border-top: 1px dashed rgba(255, 255, 255, 0.1);
+  border-top: 1px dashed rgba(184, 134, 81, 0.25);
 
   .brand-info {
     .brand-name {
-      font-size: 24rpx;
-      font-weight: bold;
+      font-size: 25rpx;
+      font-weight: 900;
+      color: #261c15;
+      font-family: "STZhongsong", "SimSun", serif;
       display: block;
     }
     .brand-slogan {
-      font-size: 18rpx;
-      color: #64748b;
+      font-size: 19rpx;
+      color: #8c7a6e;
+      font-family: "STKaiti", "KaiTi", serif;
       margin-top: 4rpx;
       display: block;
     }
@@ -388,20 +550,27 @@ function handleSaveImage() {
     align-items: center;
 
     .qr-grid {
-      width: 70rpx;
-      height: 70rpx;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(0, 242, 254, 0.4);
-      border-radius: 10rpx;
+      width: 68rpx;
+      height: 68rpx;
+      background: rgba(184, 134, 81, 0.08);
+      border: 1.5rpx solid rgba(194, 149, 110, 0.45);
+      border-radius: 12rpx;
       display: flex;
       justify-content: center;
       align-items: center;
-      font-size: 32rpx;
+
+      .qr-icon {
+        font-size: 28rpx;
+        color: #bc312c;
+        font-family: "STKaiti", serif;
+        font-weight: bold;
+      }
     }
 
     .qr-tip {
       font-size: 16rpx;
-      color: #94a3b8;
+      color: #8c7a6e;
+      font-family: "STKaiti", "KaiTi", serif;
       margin-top: 4rpx;
     }
   }
@@ -415,8 +584,10 @@ function handleSaveImage() {
 
   .btn-item {
     flex: 1;
-    height: 76rpx;
+    height: 80rpx;
     font-size: 26rpx;
+    font-family: "STKaiti", "KaiTi", serif;
+    font-weight: 700;
   }
 
   .btn-icon {

@@ -32,20 +32,24 @@
         <text class="hero-sub">观落叶而知秋，入梦魇而观心</text>
       </view>
 
-      <!-- 梦境输入主区域 (卷轴质感) -->
+      <!-- 梦境输入主区域 (文房画笺·记梦古素帖) -->
       <view class="glass-panel input-card">
+        <view class="corner top-left"></view>
+        <view class="corner top-right"></view>
+        <view class="corner bottom-left"></view>
+        <view class="corner bottom-right"></view>
+        
         <view class="scroll-header">
-          <text class="icon">✨</text>
+          <text class="sec-symbol">❖</text>
           <text class="text">记述昨夜梦境</text>
+          <text class="header-seal">素笺</text>
         </view>
         
-        <view class="corner top-left">⌜</view>
-        <view class="corner bottom-right">⌟</view>
         <textarea
           v-model="dreamText"
           class="dream-textarea"
-          placeholder="昨晚梦见了什么？例如：走在一条水墨长廊，尽头是一扇无门的红墙..."
-          placeholder-style="color: #8c8c8c;"
+          placeholder="昨宵何梦？例如：行于水墨回廊，尽头伫立一扇朱红暗门..."
+          placeholder-style="color: #a6988c; font-family: 'STKaiti', serif;"
           maxlength="500"
         ></textarea>
         
@@ -55,12 +59,12 @@
           </text>
           <view class="header-actions">
             <view class="action-btn" :class="{ active: isRecording }" @tap="handleToggleVoiceRecording">
-              <text class="btn-icon">🎙️</text>
-              <text class="btn-text">{{ isRecording ? '聆听中...' : '语音' }}</text>
+              <text class="btn-icon">{{ isRecording ? '🌊' : '🎙' }}</text>
+              <text class="btn-text">{{ isRecording ? '聆听中...' : '聆音' }}</text>
             </view>
             <view class="action-btn" @tap="handleRandomPrompt">
-              <text class="btn-icon">🎲</text>
-              <text class="btn-text">灵感</text>
+              <text class="btn-icon">✦</text>
+              <text class="btn-text">梦兆</text>
             </view>
           </view>
         </view>
@@ -70,6 +74,7 @@
       <view class="section-box">
         <view class="section-title-row">
           <view class="title-left">
+            <text class="sec-symbol">❖</text>
             <text class="sec-title">今日解梦</text>
             <view class="stamp">解梦</view>
           </view>
@@ -112,7 +117,10 @@
       <!-- 情绪基调 -->
       <view class="section-box">
         <view class="section-title-row">
-          <text class="sec-title">梦境基调</text>
+          <view class="title-left">
+            <text class="sec-symbol">❖</text>
+            <text class="sec-title">梦境基调</text>
+          </view>
         </view>
         <view class="mood-grid">
           <view
@@ -122,27 +130,9 @@
             :class="{ active: selectedMoodId === m.id }"
             @tap="selectedMoodId = m.id"
           >
+            <view class="mood-seal" v-if="selectedMoodId === m.id">契</view>
             <text class="mood-icon">{{ m.icon }}</text>
             <text class="mood-name">{{ m.name }}</text>
-          </view>
-        </view>
-      </view>
-
-      <!-- 意象标签 -->
-      <view class="section-box">
-        <view class="section-title-row">
-          <text class="sec-title">核心意象</text>
-          <text class="sec-desc">(最多选 4 项)</text>
-        </view>
-        <view class="tags-container">
-          <view
-            v-for="tag in ELEMENT_TAGS"
-            :key="tag"
-            class="cyber-tag"
-            :class="{ active: selectedTags.includes(tag) }"
-            @tap="toggleTag(tag)"
-          >
-            {{ tag }}
           </view>
         </view>
       </view>
@@ -165,17 +155,16 @@
       </view>
     </view>
 
-    
-<view class="disclaimer-footer">
+    <view class="disclaimer-footer">
       <text>内容仅供个人娱乐，禁止作为任何参考</text>
     </view>
-</view>
+  </view>
 </template>
 
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { PERSONAS, MOODS, ELEMENT_TAGS, RANDOM_DREAM_PROMPTS } from '../../api/dreamEngine.js';
+import { PERSONAS, MOODS, RANDOM_DREAM_PROMPTS } from '../../api/dreamEngine.js';
 import { useDreamStore } from '../../store/dreamStore.js';
 
 const dreamStore = useDreamStore();
@@ -183,7 +172,6 @@ const dreamStore = useDreamStore();
 const dreamText = ref('');
 const selectedPersonaId = ref('zhougong');
 const selectedMoodId = ref('absurd');
-const selectedTags = ref(['坠落失重', '时钟倒流']);
 
 const isAnalyzing = ref(false);
 const loadingStepText = ref('正在焚香，静候梦兆...');
@@ -243,18 +231,6 @@ function handleToggleVoiceRecording() {
   }
 }
 
-function toggleTag(tag) {
-  if (selectedTags.value.includes(tag)) {
-    selectedTags.value = selectedTags.value.filter(t => t !== tag);
-  } else {
-    if (selectedTags.value.length >= 4) {
-      uni.showToast({ title: '最多选择4个意象标签', icon: 'none' });
-      return;
-    }
-    selectedTags.value.push(tag);
-  }
-}
-
 
 
 async function handleStartDecoding() {
@@ -279,7 +255,7 @@ async function handleStartDecoding() {
       dreamText: dreamText.value,
       personaId: selectedPersonaId.value,
       moodId: selectedMoodId.value,
-      selectedTags: selectedTags.value
+      selectedTags: []
     });
 
     clearTimeout(timer1);
@@ -300,14 +276,14 @@ async function handleStartDecoding() {
 <style lang="scss" scoped>
 .page-container {
   min-height: 100vh;
-  padding-bottom: 160rpx;
+  padding-bottom: 140rpx;
   position: relative;
 }
 
 .content-wrapper {
   position: relative;
   z-index: 1;
-  padding: 40rpx 30rpx;
+  padding: 40rpx 30rpx 8rpx;
 }
 
 .vertical-deco {
@@ -441,69 +417,111 @@ async function handleStartDecoding() {
   }
 }
 
-/* Input Card */
+/* Input Card: 文房画笺·记梦古素帖 */
 .input-card {
-  padding: 40rpx;
-  margin-bottom: 50rpx;
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(194, 149, 110, 0.2);
-  border-radius: 4rpx;
-  box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.04);
+  padding: 36rpx 32rpx 30rpx 32rpx;
+  margin-bottom: 48rpx;
+  /* 素笺微透底色：温润米宣微透光质感 */
+  background: rgba(254, 251, 246, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1.5rpx solid rgba(194, 149, 110, 0.38);
+  border-radius: 12rpx;
+  box-shadow: 0 8rpx 28rpx rgba(120, 90, 60, 0.05), inset 0 0 0 1rpx rgba(255, 255, 255, 0.9);
   position: relative;
 
+  /* 古典四角回纹回角 */
   .corner {
     position: absolute;
-    font-size: 40rpx;
-    color: #c2956e;
-    opacity: 0.6;
+    width: 16rpx;
+    height: 16rpx;
+    border-color: rgba(184, 134, 81, 0.6);
     pointer-events: none;
-    font-family: serif;
     
     &.top-left {
-      top: 10rpx;
-      left: 16rpx;
+      top: 12rpx;
+      left: 12rpx;
+      border-top: 2rpx solid;
+      border-left: 2rpx solid;
+    }
+    &.top-right {
+      top: 12rpx;
+      right: 12rpx;
+      border-top: 2rpx solid;
+      border-right: 2rpx solid;
+    }
+    &.bottom-left {
+      bottom: 12rpx;
+      left: 12rpx;
+      border-bottom: 2rpx solid;
+      border-left: 2rpx solid;
     }
     &.bottom-right {
-      bottom: 110rpx;
-      right: 16rpx;
+      bottom: 12rpx;
+      right: 12rpx;
+      border-bottom: 2rpx solid;
+      border-right: 2rpx solid;
     }
   }
 
   .scroll-header {
     display: flex;
     align-items: center;
-    gap: 12rpx;
+    gap: 10rpx;
     margin-bottom: 20rpx;
     
-    .icon { font-size: 30rpx; }
+    .sec-symbol {
+      font-size: 22rpx;
+      color: #b58252;
+      font-weight: normal;
+    }
+
     .text {
       font-size: 28rpx;
+      font-weight: 900;
+      color: #261c15;
+      letter-spacing: 2rpx;
+      font-family: "STZhongsong", "SimSun", "STKaiti", serif;
+    }
+
+    .header-seal {
+      font-size: 16rpx;
+      color: #bc312c;
+      border: 1.5rpx solid #bc312c;
+      background: rgba(188, 49, 44, 0.08);
+      padding: 2rpx 8rpx;
+      border-radius: 3rpx;
+      font-family: "STKaiti", "KaiTi", serif;
       font-weight: bold;
-      color: #2b2b2b;
+      transform: rotate(-4deg);
+      letter-spacing: 1rpx;
+      margin-left: 6rpx;
     }
   }
 
   .dream-textarea {
     width: 100%;
-    height: 240rpx;
+    height: 220rpx;
     background: transparent;
     padding: 0;
     font-size: 28rpx;
-    color: #2b2b2b;
-    line-height: 1.6;
-    margin-bottom: 20rpx;
+    color: #261c15;
+    line-height: 1.7;
+    font-family: "STKaiti", "KaiTi", "SimSun", serif;
+    margin-bottom: 16rpx;
   }
 
   .card-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-top: 1px dashed rgba(0, 0, 0, 0.1);
-    padding-top: 20rpx;
+    border-top: 1px dashed rgba(184, 134, 81, 0.25);
+    padding-top: 18rpx;
 
     .word-count {
       font-size: 22rpx;
-      color: #8c8c8c;
+      color: #9c8e84;
+      font-family: "STKaiti", "KaiTi", serif;
       &.count-warn { color: #bc312c; }
     }
 
@@ -515,19 +533,21 @@ async function handleStartDecoding() {
         display: flex;
         align-items: center;
         gap: 8rpx;
-        background: rgba(0, 0, 0, 0.03);
-        border: 1px solid rgba(0, 0, 0, 0.08);
-        padding: 8rpx 20rpx;
+        background: rgba(246, 239, 226, 0.7);
+        border: 1px solid rgba(194, 149, 110, 0.35);
+        padding: 6rpx 20rpx;
         border-radius: 30rpx;
+        box-shadow: 0 2rpx 6rpx rgba(110, 80, 50, 0.04);
+        font-family: "STKaiti", "KaiTi", serif;
         transition: all 0.2s;
 
-        .btn-icon { font-size: 24rpx; }
-        .btn-text { font-size: 22rpx; color: #595959; }
+        .btn-icon { font-size: 22rpx; color: #6b5a4e; }
+        .btn-text { font-size: 22rpx; color: #4a3d35; font-weight: 600; letter-spacing: 1rpx; }
 
         &.active {
-          background: rgba(188, 49, 44, 0.1);
+          background: rgba(188, 49, 44, 0.08);
           border-color: #bc312c;
-          .btn-text { color: #bc312c; }
+          .btn-icon, .btn-text { color: #bc312c; font-weight: bold; }
         }
       }
     }
@@ -536,95 +556,116 @@ async function handleStartDecoding() {
 
 /* Sections */
 .section-box {
-  margin-bottom: 40rpx;
+  margin-bottom: 44rpx;
+
+  &:last-child {
+    margin-bottom: 12rpx;
+  }
 
   .section-title-row {
     display: flex;
     flex-direction: column;
     margin-bottom: 24rpx;
-    gap: 6rpx;
+    gap: 8rpx;
 
     .title-left {
       display: flex;
       align-items: center;
-      gap: 16rpx;
+      gap: 12rpx;
+
+      .sec-symbol {
+        font-size: 24rpx;
+        color: #b58252;
+        font-weight: normal;
+        line-height: 1;
+      }
 
       .sec-title {
-        font-size: 34rpx;
-        font-weight: bold;
-        color: #2b2b2b;
-        letter-spacing: 2rpx;
+        font-size: 32rpx;
+        font-weight: 900;
+        color: #261c15;
+        letter-spacing: 4rpx;
+        font-family: "STZhongsong", "SimSun", "STKaiti", serif;
       }
 
       .stamp {
-        font-size: 20rpx;
+        font-size: 18rpx;
         color: #ffffff;
         background-color: #bc312c;
         border: 2rpx solid #a12b26;
-        padding: 4rpx 10rpx;
-        border-radius: 6rpx;
+        padding: 2rpx 10rpx;
+        border-radius: 4rpx;
         font-weight: bold;
         font-family: "KaiTi", "STKaiti", serif;
         transform: rotate(-4deg);
-        box-shadow: 4rpx 4rpx 0 rgba(188, 49, 44, 0.15);
+        box-shadow: 2rpx 2rpx 0 rgba(188, 49, 44, 0.15);
         letter-spacing: 2rpx;
       }
     }
 
     .sec-desc {
       font-size: 22rpx;
-      color: #8c8c8c;
+      color: #8c827a;
+      font-family: "STKaiti", "KaiTi", serif;
+      letter-spacing: 1rpx;
+      padding-left: 36rpx;
     }
   }
 }
 
-/* Personas */
+/* Personas: 宗师法门·问道秘卷 */
 .persona-grid {
   display: flex;
   flex-direction: column;
   gap: 24rpx;
 
   .persona-card {
-    background: rgba(255, 255, 255, 0.5);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    border-radius: 24rpx;
-    padding: 24rpx;
+    background: rgba(255, 255, 255, 0.68);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1.5rpx solid rgba(194, 149, 110, 0.32);
+    border-radius: 16rpx;
+    padding: 26rpx;
     display: flex;
     flex-direction: row;
     align-items: flex-start;
-    gap: 20rpx;
+    gap: 22rpx;
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    box-shadow: 0 4rpx 16rpx rgba(110, 95, 85, 0.04);
+    box-shadow: 0 4rpx 16rpx rgba(140, 110, 85, 0.04);
     position: relative;
     overflow: hidden;
 
     .persona-watermark {
       position: absolute;
-      right: -10rpx;
-      bottom: -20rpx;
-      font-size: 140rpx;
-      color: rgba(194, 149, 110, 0.05);
-      font-family: "STKaiti", "KaiTi", serif;
+      right: -6rpx;
+      bottom: -18rpx;
+      font-size: 150rpx;
+      color: rgba(184, 134, 81, 0.06);
+      font-family: "STKaiti", "KaiTi", "SimSun", serif;
       z-index: 0;
       pointer-events: none;
     }
 
+    /* 古法玉印/铜徽头像框 */
     .persona-avatar-box {
-        width: 72rpx;
-        height: 72rpx;
-        border-radius: 50%;
-        background: #ffffff;
-        border: 2rpx solid rgba(255,255,255,1);
-        box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.06);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s;
-        flex-shrink: 0;
-        z-index: 1;
+      width: 78rpx;
+      height: 78rpx;
+      border-radius: 50%;
+      background: radial-gradient(circle, #fcfaf5 0%, #efe4cf 100%);
+      border: 2rpx solid rgba(194, 149, 110, 0.5);
+      box-shadow: 0 3rpx 8rpx rgba(110, 80, 50, 0.08), inset 0 0 0 2rpx rgba(255, 255, 255, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+      flex-shrink: 0;
+      z-index: 1;
 
-        .persona-avatar { font-size: 40rpx; }
+      .persona-avatar {
+        font-size: 38rpx;
+        color: #2b1f16;
+        font-weight: bold;
+      }
     }
 
     .persona-content {
@@ -643,108 +684,234 @@ async function handleStartDecoding() {
       .persona-name {
         font-size: 30rpx;
         font-weight: 900;
-        color: #332b26;
-        font-family: "STZhongsong", "SimSun", serif;
+        color: #261c15;
+        font-family: "STZhongsong", "SimSun", "STKaiti", serif;
         letter-spacing: 2rpx;
       }
 
+      /* 古典长方小印牌 */
       .persona-tag {
         font-size: 20rpx;
-        font-weight: 600;
-        border: 1px solid;
+        font-weight: 700;
+        border: 1.5rpx solid;
         padding: 2rpx 12rpx;
-        border-radius: 100rpx;
+        border-radius: 4rpx;
+        font-family: "STKaiti", "KaiTi", serif;
+        letter-spacing: 1rpx;
       }
 
       .persona-divider {
-        width: 32rpx;
-        height: 4rpx;
-        background: rgba(194, 149, 110, 0.3);
-        border-radius: 4rpx;
+        width: 36rpx;
+        height: 3rpx;
+        background: rgba(184, 134, 81, 0.35);
+        border-radius: 2rpx;
         margin: 6rpx 0;
       }
 
       .persona-desc {
-        font-size: 22rpx;
-        color: #6c635e;
-        line-height: 1.4;
-        margin-bottom: 6rpx;
+        font-size: 23rpx;
+        color: #5c5249;
+        line-height: 1.5;
+        font-family: "STKaiti", "KaiTi", serif;
+        margin-bottom: 8rpx;
       }
 
       .persona-footer {
         display: flex;
         align-items: center;
         gap: 6rpx;
-        font-size: 20rpx;
+        font-size: 22rpx;
         font-weight: bold;
-        opacity: 0.8;
+        font-family: "STKaiti", "KaiTi", serif;
+        letter-spacing: 2rpx;
+        opacity: 0.9;
       }
     }
 
     &.active {
-      background: rgba(255, 255, 255, 0.9);
-      border-color: #c2956e;
-      box-shadow: 0 16rpx 40rpx rgba(194, 149, 110, 0.15);
-      transform: translateY(-4rpx);
+      background: rgba(255, 255, 255, 0.94);
+      border-color: rgba(184, 134, 81, 0.65);
+      border-left: 6rpx solid #b88651;
+      box-shadow: 0 10rpx 30rpx rgba(184, 134, 81, 0.15);
+      transform: translateY(-3rpx);
       
       .persona-avatar-box {
-        box-shadow: 0 8rpx 20rpx rgba(194, 149, 110, 0.2);
+        box-shadow: 0 4rpx 14rpx rgba(184, 134, 81, 0.25), inset 0 0 0 2rpx #fff;
+        border-color: #b88651;
       }
     }
   }
 }
 
-/* Moods */
+/* Moods: 简单的古籍书封效果 (轻盈通透·与上方色调统一) */
 .mood-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20rpx;
-  justify-content: flex-start;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20rpx 16rpx;
   padding: 10rpx 0;
 
   .mood-item {
-    width: calc(33.33% - 14rpx);
-    height: 140rpx;
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    background: rgba(255, 255, 255, 0.4);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.7);
-    border-radius: 24rpx;
-    gap: 12rpx;
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    box-shadow: 0 4rpx 12rpx rgba(110, 95, 85, 0.04);
+    justify-content: flex-start;
+    padding: 26rpx 8rpx 28rpx 12rpx;
+    min-height: 196rpx;
+    /* 与上方卡片一致的通透轻盈宣纸底色 */
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(194, 149, 110, 0.28);
+    border-left: 6rpx solid rgba(184, 134, 81, 0.55); /* 柔和浅雅的书脊金线 */
+    border-radius: 4rpx 10rpx 10rpx 4rpx;
+    box-shadow: 
+      inset 2rpx 0 0 rgba(184, 134, 81, 0.12),
+      0 4rpx 14rpx rgba(120, 95, 70, 0.04);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-sizing: border-box;
 
-    .mood-icon { 
-      font-size: 40rpx; 
-      transition: transform 0.3s;
-    }
-    .mood-name { 
-      font-size: 22rpx; 
-      color: #6c635e; 
-      font-weight: 500;
+    /* 图标：古籍封页墨拓 */
+    .mood-icon {
+      font-size: 42rpx;
+      margin-bottom: 16rpx;
+      filter: grayscale(0.85) sepia(0.6) brightness(0.65) contrast(1.2);
+      opacity: 0.9;
+      transition: all 0.3s ease;
+      z-index: 1;
     }
 
+    /* 字体：书封竖排题签小楷，陈年焦墨 */
+    .mood-name {
+      font-size: 24rpx;
+      color: #2b1e15;
+      font-family: "STKaiti", "KaiTi", "SimSun", serif;
+      font-weight: 700;
+      writing-mode: vertical-rl;
+      letter-spacing: 12rpx;
+      text-shadow: 0 0 1px rgba(43, 30, 21, 0.25);
+      transition: color 0.3s;
+      z-index: 1;
+    }
+
+    /* 倾斜朱砂小契印 */
+    .mood-seal {
+      position: absolute;
+      right: 6rpx;
+      top: 6rpx;
+      width: 22rpx;
+      height: 22rpx;
+      border: 1.5rpx solid #bc312c;
+      color: #bc312c;
+      background: rgba(188, 49, 44, 0.08);
+      font-size: 14rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: "STKaiti", "KaiTi", serif;
+      transform: rotate(-12deg);
+      border-radius: 3rpx;
+      z-index: 3;
+    }
+
+    /* 选中：书封微泛浅水红，书脊转为深朱砂红锦 */
     &.active {
-      background: rgba(255, 255, 255, 0.95);
-      border-color: #5c8984;
-      box-shadow: 0 8rpx 24rpx rgba(92, 137, 132, 0.15);
-      transform: translateY(-4rpx);
-      
-      .mood-icon { transform: scale(1.1); }
-      .mood-name { font-weight: 800; color: #5c8984; }
+      background: rgba(255, 255, 255, 0.94);
+      border-color: rgba(188, 49, 44, 0.45);
+      border-left: 6rpx solid #bc312c;
+      box-shadow: 0 6rpx 20rpx rgba(188, 49, 44, 0.12);
+      transform: translateY(-3rpx);
+
+      .mood-icon {
+        filter: sepia(1) saturate(4) hue-rotate(330deg) brightness(0.78);
+        opacity: 1;
+        transform: scale(1.08);
+      }
+
+      .mood-name {
+        color: #8c1e18;
+        font-weight: 900;
+        text-shadow: 0 0 1px rgba(140, 30, 24, 0.35);
+      }
     }
   }
 }
 
-/* Tags */
+/* Tags: 核心意象模块 (文房简匣托盘 · 温润玉竹签) */
 .tags-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16rpx;
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16rpx 14rpx;
+  padding: 24rpx 18rpx;
+  box-sizing: border-box;
+  /* 模块专属托盘背景：素雅轻透宣纸托盘 */
+  background: rgba(255, 255, 255, 0.48);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1.5rpx solid rgba(194, 149, 110, 0.26);
+  border-radius: 16rpx;
+  box-shadow: 0 6rpx 20rpx rgba(120, 95, 70, 0.03), inset 0 0 0 1rpx rgba(255, 255, 255, 0.7);
+  overflow: hidden;
+
+  /* 背景隐约古典意象水墨水印 */
+  &::before {
+    content: '象';
+    position: absolute;
+    right: 8rpx;
+    bottom: -28rpx;
+    font-size: 190rpx;
+    font-family: "STKaiti", "KaiTi", "SimSun", serif;
+    color: rgba(184, 134, 81, 0.045);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .cyber-tag {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 64rpx;
+    padding: 0 10rpx;
+    margin: 0;
+    width: 100%;
+    box-sizing: border-box;
+    /* 素雅玉竹微质感：清白素竹纹 */
+    background: 
+      repeating-linear-gradient(90deg, 
+        rgba(184, 134, 81, 0.02) 0px, 
+        rgba(184, 134, 81, 0.02) 1px, 
+        transparent 1px, 
+        transparent 5px
+      ),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(253, 249, 242, 0.88) 50%, rgba(247, 240, 230, 0.82) 100%);
+    border: 1px solid rgba(194, 149, 110, 0.28);
+    border-top: 2.5rpx solid rgba(184, 134, 81, 0.45); /* 柔和浅雅的竹简切口暗线 */
+    border-bottom: 2.5rpx solid rgba(184, 134, 81, 0.45);
+    border-radius: 4rpx;
+    font-size: 24rpx;
+    color: #382c24;
+    font-family: "STKaiti", "KaiTi", serif;
+    font-weight: 700;
+    letter-spacing: 1.5rpx;
+    text-shadow: 0 0 1px rgba(56, 44, 36, 0.18);
+    box-shadow: inset 0 1rpx 0 rgba(255, 255, 255, 0.9), 0 2rpx 6rpx rgba(120, 95, 70, 0.04);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &.active {
+      background: linear-gradient(180deg, #ffffff 0%, #fdf2ee 50%, #fae6df 100%);
+      border-color: rgba(188, 49, 44, 0.4);
+      border-top: 2.5rpx solid #bc312c;
+      border-bottom: 2.5rpx solid #bc312c;
+      color: #8c1e18;
+      font-weight: 900;
+      text-shadow: 0 0 1px rgba(140, 30, 24, 0.35);
+      box-shadow: inset 0 0 0 1rpx rgba(188, 49, 44, 0.15), 0 4rpx 14rpx rgba(188, 49, 44, 0.12);
+      transform: translateY(-1rpx);
+    }
+  }
 }
 
 /* Fixed Bottom Bar */
@@ -781,6 +948,16 @@ async function handleStartDecoding() {
     
     .btn-icon { margin-left: 12rpx; }
   }
+}
+
+.disclaimer-footer {
+  text-align: center;
+  font-size: 22rpx;
+  color: #a8988b;
+  font-family: "STKaiti", "KaiTi", serif;
+  padding: 8rpx 0 16rpx;
+  margin-top: -12rpx;
+  width: 100%;
 }
 
 /* Loading Overlay */
@@ -895,13 +1072,7 @@ async function handleStartDecoding() {
   }
 }
 
-.disclaimer-footer {
-  text-align: center;
-  font-size: 24rpx;
-  color: #999;
-  padding: 40rpx 0;
-  width: 100%;
-}
+
 
 .settings-section {
   background: rgba(255, 255, 255, 0.03);

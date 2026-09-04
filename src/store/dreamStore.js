@@ -75,7 +75,14 @@ export const useDreamStore = defineStore('dream', {
     // 从微信本地缓存加载历史记录
     let history = [];
     let favorites = [];
-    let settings = { apiKey: '', apiUrl: 'https://api.deepseek.com/v1/chat/completions', apiModel: 'deepseek-chat', autoPlaySound: true };
+    let settings = {
+      apiKey: ENV.apiKey || '',
+      apiUrl: ENV.apiUrl || 'https://api.deepseek.com/v1/chat/completions',
+      apiModel: ENV.apiModel || 'deepseek-chat',
+      difyKey: ENV.difyKey || '',
+      difyUrl: ENV.difyUrl || 'https://api.dify.ai/v1/chat-messages',
+      autoPlaySound: true
+    };
 
     try {
       const storedHistory = uni.getStorageSync(STORAGE_KEY_HISTORY);
@@ -87,8 +94,18 @@ export const useDreamStore = defineStore('dream', {
         favorites = storedFav;
       }
       const storedSet = uni.getStorageSync(STORAGE_KEY_SETTINGS);
-      if (storedSet) {
+      if (storedSet && typeof storedSet === 'object') {
         settings = { ...settings, ...storedSet };
+        // 若本地缓存中 key 为空，但 env.js 中配置了有效 key，优先使用 env.js 中的 key
+        if ((!settings.apiKey || settings.apiKey.trim().length < 10) && ENV.apiKey) {
+          settings.apiKey = ENV.apiKey;
+        }
+        if (!settings.apiUrl && ENV.apiUrl) {
+          settings.apiUrl = ENV.apiUrl;
+        }
+        if (!settings.apiModel && ENV.apiModel) {
+          settings.apiModel = ENV.apiModel;
+        }
       }
     } catch (e) {
       console.warn('Storage read error:', e);

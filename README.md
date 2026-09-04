@@ -1,4 +1,4 @@
-﻿# 梦源阁 (Cyber Dream)
+# 梦源阁 (Cyber Dream)
 
 🔮 **梦源阁** 是一款基于 Vue3 + UniApp 构建的现代化微信解梦小程序。它不仅内置了丰富的离线解梦词典，还深度融合了 AI 大模型（支持 DeepSeek 等主流大模型），能够根据用户的梦境提供极其详尽的定制化解析。
 
@@ -41,3 +41,29 @@
 
 - 本项目使用大模型接口获取解析内容。在手机端真机调试时，请确保在微信开发者工具中开启了 **“不校验合法域名”**，或在手机端点击右上方 ... 开启 **“开发调试”**，否则请求会被微信拦截。
 - 所有的解梦内容仅供个人娱乐，禁止作为任何医疗、投资或生活决策的参考！
+
+
+## 🔒 API 密钥安全配置说明
+
+为了保障开发者的 API Key 不会意外泄露到公开代码仓库，本项目已在 UI 层彻底移除了大模型 API 和 Dify 的输入配置弹窗。现在的密钥配置采用 **纯本地静态文件硬编码** 的方式，并已通过 `.gitignore` 进行了代码库隔离。
+
+配置步骤如下：
+
+1. 进入项目的 `src/config/` 目录。
+2. 复制或者重命名 `env.example.js` 文件，并将其命名为 `env.js`。
+3. 打开 `env.js` 文件，填入你真实的 API 信息（例如硅基流动的 API、Dify 知识库的 API 等）：
+   ```javascript
+   export const ENV = {
+     // 大语言模型 API（默认使用硅基流动 / DeepSeek）
+     apiUrl: 'https://api.siliconflow.cn/v1/chat/completions',
+     apiModel: 'Qwen/Qwen2.5-7B-Instruct',
+     apiKey: 'sk-你的专属大模型API_KEY', // 在这里填入你的大模型 Key
+
+     // Dify 知识库/工作流 API (可选)
+     difyUrl: 'https://api.dify.ai/v1/chat-messages',
+     difyKey: 'app-你的DIFY_API_KEY'
+   };
+   ```
+4. 重新编译小程序（`npm run dev:mp-weixin`）即可生效。
+
+> **注意：** `env.js` 文件已经被加入到了 `.gitignore` 忽略清单中。你在本地所做的任何密钥修改都不会被提交到 GitHub 或其他远程代码库，请放心配置。
